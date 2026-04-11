@@ -10,6 +10,8 @@ TESTS_FILE  = os.path.join(DATA_DIR, 'tests.json')
 SETTINGS_FILE = os.path.join(DATA_DIR, 'settings.json')
 
 # ── helpers ────────────────────────────────────────────────────────────────
+SEED_DIR = os.path.join(BASE_DIR, 'data_seed')
+
 def ensure_files():
     os.makedirs(DATA_DIR, exist_ok=True)
     defaults = {
@@ -19,7 +21,14 @@ def ensure_files():
     }
     for path, default in defaults.items():
         if not os.path.exists(path):
-            _save(path, default)
+            # Use seed file if available (first cloud deploy)
+            fname   = os.path.basename(path)
+            seed    = os.path.join(SEED_DIR, fname)
+            if os.path.exists(seed):
+                import shutil
+                shutil.copy2(seed, path)
+            else:
+                _save(path, default)
 
 def _load(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
