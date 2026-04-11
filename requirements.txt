@@ -3,3 +3,4 @@ anthropic
 gunicorn
 python-docx
 pdfplumber
+supabase
