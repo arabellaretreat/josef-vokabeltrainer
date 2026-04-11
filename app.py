@@ -2,6 +2,13 @@ from flask import Flask, render_template, jsonify, request, Response
 import json, os, uuid, random, base64, socket, shutil
 from datetime import datetime, timedelta
 
+# Load .env for local development
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv optional
+
 app = Flask(__name__)
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR  = os.environ.get('DATA_DIR', os.path.join(BASE_DIR, 'data'))
@@ -62,7 +69,17 @@ class DataStore:
     # ── vocabulary ─────────────────────────────────────────────────────────
     def get_vocabulary(self):
         if self.cloud:
-            return self._sb.table('vocabulary').select('*').order('added_date').execute().data
+            # Fetch all rows with pagination (Supabase default limit = 1000)
+            all_rows, page = [], 0
+            page_size = 1000
+            while True:
+                r = self._sb.table('vocabulary').select('*').order('added_date') \
+                    .range(page * page_size, (page + 1) * page_size - 1).execute()
+                all_rows.extend(r.data)
+                if len(r.data) < page_size:
+                    break
+                page += 1
+            return all_rows
         return self._jload(VOCAB_FILE)['vocabulary']
 
     def add_word(self, word):
