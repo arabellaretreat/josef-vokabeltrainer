@@ -235,17 +235,77 @@ tr:hover td{background:var(--blue-50)}
 .login-btn:hover{background:#1a4a82}
 .login-err{color:#dc2626;font-size:14px;margin-top:12px;display:none}
 @media(max-width:1100px){.grid-4{grid-template-columns:1fr 1fr}}
+
+/* ── Tablet (iPad) ── */
 @media(max-width:900px){
-  .grid-4{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}
-  .sidebar{width:70px}.nav-item span,.sidebar-logo .logo-text,.sidebar-user .user-info{display:none}
-  .nav-item{justify-content:center;padding:14px}.nav-badge{display:none}
-  .content{padding:16px}.topbar{padding:0 16px}
-  .test-question-card{padding:20px}.choices{grid-template-columns:1fr}
+  .grid-4{grid-template-columns:1fr 1fr}
+  .grid-2{grid-template-columns:1fr}
+  /* Sidebar verstecken – stattdessen Bottom-Nav */
+  .sidebar{display:none}
+  .main{width:100%}
+  .topbar{padding:0 16px;height:56px}
+  .topbar-title{font-size:19px}
+  .topbar-subtitle{display:none}
+  .content{padding:16px;padding-bottom:90px}
+  .test-question-card{padding:20px}
+  .choices{grid-template-columns:1fr}
+  .card-word{font-size:38px}
+  .test-q-word{font-size:34px}
+  .fc-btn{font-size:17px;padding:16px 24px}
+  .translator-dir-tabs{flex-wrap:wrap}
+  .tr-tab{font-size:14px;padding:9px 6px}
+  .modal{width:95vw;padding:20px}
+  .form-row{grid-template-columns:1fr}
+  .result-grade{font-size:64px}
 }
+
+/* ── iPhone ── */
 @media(max-width:600px){
-  .grid-4{grid-template-columns:1fr}
-  .card-word{font-size:36px}.test-q-word{font-size:32px}
-  .fc-btn{font-size:16px;padding:14px 20px}
+  .grid-4{grid-template-columns:1fr 1fr}
+  .grid-2{grid-template-columns:1fr}
+  .grid-3{grid-template-columns:1fr}
+  .card-word{font-size:32px}
+  .test-q-word{font-size:28px}
+  .fc-btn{font-size:16px;padding:14px 16px}
+  .choice-btn{font-size:16px;padding:16px 14px}
+  .btn-lg{font-size:15px;padding:14px 20px}
+  .stat-card .stat-num{font-size:28px}
+  .topbar-title{font-size:17px}
+  .result-grade{font-size:56px}
+  .result-grade-text{font-size:26px}
+  .tr-result-text{font-size:22px}
+  .translator-input-area textarea{font-size:17px}
+}
+
+/* ── Bottom Navigation (Mobile/Tablet) ── */
+@media(max-width:900px){
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--blue-800);z-index:100;
+    box-shadow:0 -2px 12px rgba(0,0,0,.25);
+    height:70px;align-items:stretch;
+  }
+  .bottom-nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;color:rgba(255,255,255,.6);font-size:10px;font-weight:600;
+    cursor:pointer;border:none;background:none;padding:6px 2px;
+    transition:all .15s;letter-spacing:.02em;
+  }
+  .bottom-nav-item.active{color:var(--white);background:rgba(255,255,255,.1);border-radius:10px;margin:4px 2px}
+  .bottom-nav-item:hover{color:var(--white)}
+  .bottom-nav-item .bn-icon{font-size:22px;line-height:1}
+  .bottom-nav-more{position:fixed;bottom:78px;left:0;right:0;background:var(--blue-800);z-index:99;display:none;flex-direction:column;padding:8px;box-shadow:0 -4px 20px rgba(0,0,0,.3);border-radius:16px 16px 0 0}
+  .bottom-nav-more.open{display:flex}
+  .bottom-nav-more-item{display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,.85);font-size:16px;font-weight:500;cursor:pointer;border:none;background:none;border-radius:8px;width:100%}
+  .bottom-nav-more-item:hover{background:rgba(255,255,255,.08);color:var(--white)}
+  .bottom-nav-more-item .mn-icon{font-size:22px;width:28px;text-align:center}
+  .bn-overlay{display:none;position:fixed;inset:0;z-index:98}
+  .bn-overlay.open{display:block}
+}
+@media(min-width:901px){
+  .bottom-nav{display:none}
+  .bottom-nav-more{display:none!important}
+  .bn-overlay{display:none!important}
 }
 </style>
 </head>
@@ -705,6 +765,33 @@ tr:hover td{background:var(--blue-50)}
 </div>
 
 <div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- ═══ BOTTOM NAV (Mobile/Tablet) ═══════════════════════════ -->
+<div class="bn-overlay" id="bn-overlay" onclick="closeMoreMenu()"></div>
+<div class="bottom-nav-more" id="bn-more">
+  <button class="bottom-nav-more-item" onclick="showViewMobile('translator')"><span class="mn-icon">🌐</span>Übersetzer</button>
+  <button class="bottom-nav-more-item" onclick="showViewMobile('import')"><span class="mn-icon">📥</span>Importieren</button>
+  <button class="bottom-nav-more-item" onclick="showViewMobile('homework')"><span class="mn-icon">📝</span>Hausaufgaben</button>
+  <button class="bottom-nav-more-item" onclick="showViewMobile('results')"><span class="mn-icon">📊</span>Ergebnisse</button>
+  <button class="bottom-nav-more-item" onclick="showViewMobile('settings')"><span class="mn-icon">⚙️</span>Einstellungen</button>
+</div>
+<nav class="bottom-nav">
+  <button class="bottom-nav-item active" id="bn-dashboard" onclick="showViewMobile('dashboard')">
+    <span class="bn-icon">🏠</span><span>Start</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-vocabulary" onclick="showViewMobile('vocabulary')">
+    <span class="bn-icon">📖</span><span>Vokabeln</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-learn" onclick="showViewMobile('learn')">
+    <span class="bn-icon">🃏</span><span>Lernen</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-test" onclick="showViewMobile('test')">
+    <span class="bn-icon">✏️</span><span>Test</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-more-btn" onclick="toggleMoreMenu()">
+    <span class="bn-icon">☰</span><span>Mehr</span>
+  </button>
+</nav>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -1637,6 +1724,34 @@ function printHWAsPDF() {
 // ══════════════════════════════════════════════════════════════
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Bottom Nav (Mobile) ──────────────────────────────────────
+const BN_MAIN = ['dashboard','vocabulary','learn','test'];
+
+function showViewMobile(name) {
+  closeMoreMenu();
+  showView(name);
+  // Bottom nav active state
+  BN_MAIN.forEach(v => {
+    const btn = document.getElementById('bn-'+v);
+    if (btn) btn.classList.toggle('active', v === name);
+  });
+  const moreBtn = document.getElementById('bn-more-btn');
+  if (moreBtn) moreBtn.classList.toggle('active', !BN_MAIN.includes(name));
+}
+
+function toggleMoreMenu() {
+  const menu = document.getElementById('bn-more');
+  const overlay = document.getElementById('bn-overlay');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+}
+
+function closeMoreMenu() {
+  document.getElementById('bn-more').classList.remove('open');
+  document.getElementById('bn-overlay').classList.remove('open');
+}
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); });
 });
