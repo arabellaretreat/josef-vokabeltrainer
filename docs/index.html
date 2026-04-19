@@ -2,8 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>Josefs Vokabeltrainer 🇩🇪🇮🇹</title>
+<meta name="theme-color" content="#12325a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vokabeltrainer">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231565c0'/><text y='.9em' font-size='80'>📚</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
@@ -142,11 +147,8 @@ tr:hover td{background:var(--blue-50)}
 .result-pct{font-size:20px;color:var(--gray-600);margin-top:8px}
 .result-bar{width:100%;background:var(--gray-200);border-radius:99px;height:12px;margin:20px 0;overflow:hidden}
 .result-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue-400),var(--blue-600));transition:width 1s ease}
-.wrong-list{margin-top:24px;text-align:left;max-height:240px;overflow-y:auto}
-.wrong-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:var(--radius-sm);background:var(--red-bg);margin-bottom:8px;font-size:16px}
-.wrong-item .wi-q{font-weight:700;color:var(--red)}
-.wrong-item .wi-ans{color:var(--gray-600)}
-.wrong-item .wi-correct{color:var(--green);font-weight:700}
+.wrong-list{margin-top:24px;text-align:left;max-height:360px;overflow-y:auto}
+.wrong-item{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:var(--radius);background:var(--red-bg);margin-bottom:10px;border-left:4px solid var(--red)}
 .import-tabs{display:flex;gap:2px;background:var(--gray-100);padding:4px;border-radius:var(--radius-sm);margin-bottom:20px}
 .import-tab{flex:1;padding:12px;text-align:center;border-radius:6px;cursor:pointer;font-size:15px;font-weight:600;color:var(--gray-600);border:none;background:none;transition:all .15s}
 .import-tab.active{background:var(--white);color:var(--blue-600);box-shadow:var(--shadow-sm)}
@@ -307,6 +309,87 @@ tr:hover td{background:var(--blue-50)}
   .bottom-nav-more{display:none!important}
   .bn-overlay{display:none!important}
 }
+
+/* ── iOS safe-area ── */
+@supports(padding:max(0px)){
+  .bottom-nav{padding-bottom:max(0px,env(safe-area-inset-bottom))}
+  .content{padding-bottom:max(28px,calc(env(safe-area-inset-bottom) + 90px))}
+}
+
+/* ── Photo Grid ── */
+.hw-photo-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.hw-photo-thumb{position:relative;width:100px;height:100px;border-radius:var(--radius-sm);overflow:hidden;border:2px solid var(--gray-200);flex-shrink:0}
+.hw-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.hw-photo-thumb .pt-del{position:absolute;top:4px;right:4px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.hw-photo-add{width:100px;height:100px;border:2px dashed var(--blue-300);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:28px;color:var(--blue-400);background:var(--blue-50);flex-shrink:0;transition:all .15s}
+.hw-photo-add:hover{border-color:var(--blue-600);background:var(--blue-100)}
+.hw-photo-add span{font-size:12px;color:var(--blue-600);font-weight:600;margin-top:4px}
+.hw-photo-count{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--blue-600);font-weight:600;background:var(--blue-100);padding:2px 8px;border-radius:20px;margin-left:6px}
+
+/* ── Flashcard swipe hint ── */
+.flashcard-scene{touch-action:pan-y}
+
+/* ── Login remember ── */
+.login-remember{display:flex;align-items:center;gap:8px;font-size:14px;color:#64748b;margin-top:4px;margin-bottom:8px;cursor:pointer}
+.login-remember input{width:16px;height:16px;cursor:pointer;accent-color:#1565c0}
+
+/* ── Logout btn ── */
+.sidebar-logout{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-sm);background:rgba(220,38,38,.15);color:#f87171;font-size:14px;font-weight:600;border:none;cursor:pointer;width:100%;margin-top:8px;transition:all .15s}
+.sidebar-logout:hover{background:rgba(220,38,38,.3);color:#fff}
+
+/* ── Mic Modal ── */
+.mic-overlay{position:fixed;inset:0;background:rgba(13,33,55,.92);z-index:9500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.mic-overlay.open{display:flex}
+.mic-modal{background:#fff;border-radius:28px;padding:36px 28px;width:380px;max-width:95vw;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.45)}
+.mic-modal-title{font-size:21px;font-weight:800;color:var(--blue-800);margin-bottom:6px}
+.mic-modal-sub{font-size:14px;color:var(--gray-400);margin-bottom:22px}
+.mic-lang-tabs{display:flex;gap:10px;justify-content:center;margin-bottom:28px}
+.mic-lang-btn{flex:1;max-width:160px;padding:13px 10px;border:2.5px solid var(--gray-200);border-radius:var(--radius-sm);background:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;color:var(--gray-600)}
+.mic-lang-btn.active{border-color:var(--blue-500);background:var(--blue-100);color:var(--blue-700)}
+.mic-circle-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:140px;height:140px;margin:0 auto 20px}
+.mic-circle{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--blue-500),var(--blue-700));display:flex;align-items:center;justify-content:center;font-size:46px;cursor:pointer;transition:all .2s;box-shadow:0 8px 28px rgba(21,101,192,.45);user-select:none;position:relative;z-index:2;border:none}
+.mic-circle:hover{transform:scale(1.06)}
+.mic-circle:active{transform:scale(.96)}
+.mic-circle.recording{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 8px 28px rgba(220,38,38,.5)}
+.mic-pulse-ring{position:absolute;inset:-14px;border-radius:50%;border:3px solid #ef4444;opacity:0;animation:micPulse 1.4s ease-out infinite;z-index:1}
+.mic-pulse-ring.pulse2{animation-delay:.5s}
+@keyframes micPulse{0%{transform:scale(.82);opacity:.8}100%{transform:scale(1.2);opacity:0}}
+.mic-waves{display:flex;align-items:center;justify-content:center;gap:5px;height:36px;margin-bottom:6px}
+.mic-wave-bar{width:5px;border-radius:3px;background:var(--blue-400);animation:micWave 1.1s ease-in-out infinite}
+.mic-wave-bar:nth-child(1){height:10px;animation-delay:0s}
+.mic-wave-bar:nth-child(2){height:22px;animation-delay:.12s}
+.mic-wave-bar:nth-child(3){height:16px;animation-delay:.24s}
+.mic-wave-bar:nth-child(4){height:28px;animation-delay:.36s}
+.mic-wave-bar:nth-child(5){height:12px;animation-delay:.48s}
+.mic-wave-bar:nth-child(6){height:20px;animation-delay:.14s}
+.mic-wave-bar:nth-child(7){height:10px;animation-delay:.28s}
+@keyframes micWave{0%,100%{transform:scaleY(.35);opacity:.5}50%{transform:scaleY(1);opacity:1}}
+.mic-status{font-size:15px;color:var(--gray-400);min-height:22px;margin-bottom:10px}
+.mic-transcript{font-size:24px;font-weight:700;color:var(--blue-800);min-height:34px;margin-bottom:4px;word-break:break-word;line-height:1.35;padding:0 8px}
+.mic-interim{font-size:18px;color:var(--gray-400);min-height:26px;word-break:break-word;font-style:italic;padding:0 8px}
+.mic-actions{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+/* Mic button in topbar */
+.topbar-mic{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--blue-100);color:var(--blue-700);border:none;font-size:20px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.topbar-mic:hover{background:var(--blue-600);color:#fff}
+/* Mic inline btn (in forms) */
+.btn-mic{background:var(--blue-50);color:var(--blue-600);border:1.5px solid var(--blue-200);border-radius:var(--radius-sm);font-size:18px;padding:8px 12px;cursor:pointer;transition:all .15s}
+.btn-mic:hover{background:var(--blue-600);color:#fff}
+
+/* ── OCR / Kamera-Übersetzer ── */
+.ocr-section{margin-top:14px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--blue-200);background:var(--blue-50)}
+.ocr-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--blue-100);border-bottom:1px solid var(--blue-200)}
+.ocr-header strong{font-size:15px;color:var(--blue-800);flex:1}
+.ocr-progress-wrap{padding:12px 14px}
+.ocr-bar{height:6px;background:var(--gray-200);border-radius:99px;overflow:hidden;margin:8px 0}
+.ocr-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue-400),var(--blue-600));border-radius:99px;transition:width .3s;width:0%}
+.ocr-status-txt{font-size:14px;color:var(--blue-600);font-weight:600;min-height:20px}
+.ocr-preview-img{max-width:100%;max-height:200px;display:block;margin:10px auto;border-radius:var(--radius-sm);box-shadow:var(--shadow)}
+.ocr-extracted{background:#fff;border:1px solid var(--blue-200);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;color:var(--gray-800);line-height:1.7;max-height:100px;overflow-y:auto;white-space:pre-wrap;margin-top:8px}
+
+/* ── Online-Übersetzung Ergebnis ── */
+.tr-online-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--blue-100);color:var(--blue-700);vertical-align:middle;margin-left:6px}
+.tr-result-text.loading::after{content:'';display:inline-block;width:20px;height:20px;border:3px solid var(--blue-200);border-top-color:var(--blue-500);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:10px}
+
 </style>
 </head>
 <body>
@@ -319,12 +402,18 @@ tr:hover td{background:var(--blue-50)}
     <div class="login-sub">🇩🇪 Deutsch ↔ 🇮🇹 Italiano</div>
     <div class="form-group">
       <label>E-Mail</label>
-      <input type="email" id="login-email" placeholder="E-Mail Adresse" value="" autocomplete="email">
+      <input type="email" id="login-email" placeholder="E-Mail Adresse" autocomplete="username" inputmode="email">
     </div>
     <div class="form-group">
       <label>Passwort</label>
-      <input type="password" id="login-pw" placeholder="Passwort" onkeydown="if(event.key==='Enter')doLogin()">
+      <div style="position:relative">
+        <input type="password" id="login-pw" placeholder="Passwort" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:44px">
+        <button type="button" onclick="togglePWVis()" id="pw-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8">👁</button>
+      </div>
     </div>
+    <label class="login-remember">
+      <input type="checkbox" id="login-remember" checked> Angemeldet bleiben
+    </label>
     <button class="login-btn" onclick="doLogin()">🔓 Anmelden</button>
     <div class="login-err" id="login-err">❌ E-Mail oder Passwort falsch.</div>
   </div>
@@ -366,6 +455,7 @@ tr:hover td{background:var(--blue-50)}
         <span>Schüler</span>
       </div>
     </div>
+    <button class="sidebar-logout" onclick="doLogout()">🚪 Abmelden</button>
   </div>
 </aside>
 
@@ -375,6 +465,7 @@ tr:hover td{background:var(--blue-50)}
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-subtitle" id="topbar-subtitle">Willkommen zurück!</div>
     </div>
+    <button class="topbar-mic" onclick="openMicModal('de-DE','translator')" title="🎤 Spracheingabe">🎤</button>
     <div id="topbar-actions"></div>
   </div>
 
@@ -474,12 +565,15 @@ tr:hover td{background:var(--blue-50)}
               <div class="flashcard-front">
                 <div class="card-lang" id="fc-front-lang">DEUTSCH</div>
                 <div class="card-word" id="fc-front-word">–</div>
-                <div class="flashcard-tap">Tippen zum Umdrehen 👆</div>
+                <div class="flashcard-tap">Tippen oder wischen zum Umdrehen 👆</div>
               </div>
               <div class="flashcard-back">
                 <div class="card-lang" id="fc-back-lang">ITALIANO</div>
                 <div class="card-word" id="fc-back-word">–</div>
                 <div class="card-hint" id="fc-back-cat"></div>
+                <div style="position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;padding:0 20px;font-size:13px;opacity:.55">
+                  <span>← wischen = Falsch</span><span>Richtig = wischen →</span>
+                </div>
               </div>
             </div>
           </div>
@@ -634,16 +728,39 @@ tr:hover td{background:var(--blue-50)}
         <div class="translator-box">
           <div class="translator-dir-tabs">
             <button class="tr-tab active" id="tr-tab-auto" onclick="setTrDir('auto')">🔀 Automatisch</button>
-            <button class="tr-tab" id="tr-tab-de_it" onclick="setTrDir('de_it')">🇩🇪 → 🇮🇹 Deutsch → Italienisch</button>
-            <button class="tr-tab" id="tr-tab-it_de" onclick="setTrDir('it_de')">🇮🇹 → 🇩🇪 Italienisch → Deutsch</button>
+            <button class="tr-tab" id="tr-tab-de_it" onclick="setTrDir('de_it')">🇩🇪 → 🇮🇹</button>
+            <button class="tr-tab" id="tr-tab-it_de" onclick="setTrDir('it_de')">🇮🇹 → 🇩🇪</button>
           </div>
+          <!-- Eingabe-Buttons: Mic + Kamera -->
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <button class="btn btn-secondary" style="flex:1;min-width:140px;font-size:15px;padding:13px 10px" onclick="openMicModal('de-DE','translator')">🎤 🇩🇪 Deutsch</button>
+            <button class="btn btn-secondary" style="flex:1;min-width:140px;font-size:15px;padding:13px 10px" onclick="openMicModal('it-IT','translator')">🎤 🇮🇹 Italiano</button>
+            <button class="btn btn-secondary" style="flex:1;min-width:140px;font-size:15px;padding:13px 10px" onclick="startOCR()">📷 Text fotografieren</button>
+          </div>
+          <input type="file" id="ocr-file-input" accept="image/*" capture="environment" style="display:none" onchange="doOCR(this.files[0])">
+
           <div class="translator-input-area">
-            <textarea id="tr-input" placeholder="Wort oder Satz eingeben..." oninput="clearTrResult()" onkeydown="if(event.ctrlKey&&event.key==='Enter')runTranslate()"></textarea>
+            <textarea id="tr-input" placeholder="Wort oder Satz eingeben — oder 🎤 sprechen / 📷 fotografieren…" oninput="onTrInput()" onkeydown="if(event.ctrlKey&&event.key==='Enter')runTranslate()"></textarea>
           </div>
+
+          <!-- OCR Fortschritt / Ergebnis -->
+          <div id="ocr-section" class="ocr-section" style="display:none">
+            <div class="ocr-header">
+              <span>📷</span>
+              <strong id="ocr-status-txt">Text wird erkannt…</strong>
+              <button class="btn btn-secondary btn-sm" onclick="closeOCR()">✕</button>
+            </div>
+            <div class="ocr-progress-wrap">
+              <div class="ocr-bar"><div class="ocr-bar-fill" id="ocr-bar-fill"></div></div>
+              <img id="ocr-preview-img" class="ocr-preview-img" style="display:none">
+              <div id="ocr-extracted" class="ocr-extracted" style="display:none"></div>
+            </div>
+          </div>
+
           <div class="translator-actions">
             <button class="btn btn-primary btn-lg" onclick="runTranslate()">🌐 Übersetzen</button>
-            <button class="btn btn-secondary btn-lg" id="tr-mic-btn" onclick="toggleVoiceInput()">🎤 Sprechen</button>
             <button class="btn btn-secondary" onclick="swapTranslation()">⇄ Tauschen</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('tr-input').value='';clearTrResult();closeOCR()">✕ Löschen</button>
           </div>
           <div id="tr-result" style="display:none" class="translator-result">
             <div class="tr-result-text" id="tr-result-text"></div>
@@ -652,16 +769,15 @@ tr:hover td{background:var(--blue-50)}
               <button class="btn btn-success btn-sm" onclick="addTranslationToVocab()">+ Zu Vokabeln hinzufügen</button>
             </div>
           </div>
-          <div id="tr-error" style="display:none" class="alert alert-orange" style="margin-top:12px"></div>
+          <div id="tr-error" class="alert alert-orange" style="display:none;margin-top:12px"></div>
         </div>
         <div class="card">
           <div class="section-title" style="margin-bottom:12px">💡 Tipps</div>
-          <ul style="font-size:15px;color:var(--gray-600);line-height:2;padding-left:18px">
-            <li>Einzelne Wörter werden in deinen Vokabeln gesucht</li>
-            <li>Nur Wörter aus der eigenen Vokabelliste werden gefunden</li>
-            <li>Mit <strong>+ Zu Vokabeln hinzufügen</strong> direkt speichern</li>
+          <ul style="font-size:15px;color:var(--gray-600);line-height:2.1;padding-left:18px">
+            <li>🎤 <strong>Sprechen:</strong> Mikrofon-Taste für sofortige Spracheingabe auf DE oder IT</li>
+            <li>Nur Wörter aus deiner Vokabelliste werden gefunden</li>
+            <li>Mit <strong>+ Zu Vokabeln</strong> direkt speichern</li>
             <li>Strg+Enter zum schnellen Übersetzen</li>
-            <li>🎤 Sprechen: Mikrofon-Taste für Spracheingabe (Chrome/Edge)</li>
           </ul>
         </div>
       </div>
@@ -670,7 +786,45 @@ tr:hover td{background:var(--blue-50)}
     <!-- HOMEWORK -->
     <div id="view-homework" class="view">
       <div style="max-width:860px;margin:0 auto">
-        <div id="hw-upload-section">
+
+        <!-- LIST -->
+        <div id="hw-list-section">
+          <div class="section-header" style="margin-bottom:16px">
+            <div>
+              <div class="section-title">📝 Hausaufgaben</div>
+              <div class="section-sub" id="hw-list-count">Wird geladen…</div>
+            </div>
+            <button class="btn btn-primary" onclick="showHWNew()">+ Neue Hausaufgabe</button>
+          </div>
+          <div id="hw-setup-alert" class="alert alert-orange" style="display:none;margin-bottom:16px">
+            ⚠️ <strong>Tabelle fehlt.</strong> Bitte diese SQL in Supabase → SQL Editor ausführen:<br>
+            <code style="display:block;margin-top:8px;font-size:13px;background:#fff3;padding:8px;border-radius:6px;white-space:pre-wrap">CREATE TABLE IF NOT EXISTS homework (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  content text NOT NULL DEFAULT '',
+  photos text DEFAULT '[]',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE homework ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_all" ON homework FOR ALL USING (true) WITH CHECK (true);
+-- Falls Tabelle schon existiert, Spalte nachrüsten:
+ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
+          </div>
+          <div id="hw-list-empty" class="empty-state" style="display:none">
+            <div class="es-icon">📝</div>
+            <h3>Noch keine Hausaufgaben gespeichert</h3>
+            <p>Lade ein Dokument hoch oder tippe eine neue Hausaufgabe ein.</p>
+            <button class="btn btn-primary" onclick="showHWNew()">+ Neue Hausaufgabe</button>
+          </div>
+          <div id="hw-list-items"></div>
+        </div>
+
+        <!-- UPLOAD / NEU -->
+        <div id="hw-upload-section" style="display:none">
+          <div class="section-header" style="margin-bottom:16px">
+            <button class="btn btn-secondary" onclick="showHWList()">← Zurück zur Liste</button>
+          </div>
           <div class="card" style="margin-bottom:20px">
             <div class="section-title" style="margin-bottom:16px">📤 Dokument hochladen</div>
             <div class="alert alert-blue" style="margin-bottom:16px">
@@ -696,16 +850,19 @@ tr:hover td{background:var(--blue-50)}
             <div class="form-group"><label>Text</label>
               <textarea class="form-control" id="hw-content-direct" style="min-height:200px;line-height:1.9" placeholder="Hier Text eintippen…"></textarea>
             </div>
-            <button class="btn btn-primary btn-lg" onclick="openDirectEditor()">Bearbeiten & Drucken →</button>
+            <button class="btn btn-primary btn-lg" onclick="openDirectEditor()">Bearbeiten & Speichern →</button>
           </div>
         </div>
+
+        <!-- EDITOR -->
         <div id="hw-editor-section" style="display:none">
           <div class="card">
             <div class="hw-toolbar">
               <span style="font-size:15px;font-weight:700;color:var(--blue-800)" id="hw-doc-name">Dokument</span>
               <span style="flex:1"></span>
-              <button class="btn btn-secondary" onclick="resetHWUpload()">📄 Neues Dokument</button>
-              <button class="btn btn-primary btn-lg" onclick="printHWAsPDF()">🖨️ Als PDF speichern / Drucken</button>
+              <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
+              <button class="btn btn-success" onclick="saveHomework()">💾 Speichern</button>
+              <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
             </div>
             <div class="form-group"><label>Titel</label>
               <input class="form-control" id="hw-title-input" placeholder="z.B. Hausaufgaben Italiano – Josef">
@@ -713,12 +870,19 @@ tr:hover td{background:var(--blue-50)}
             <div class="form-group"><label>Inhalt bearbeiten — fehlende Stellen ausfüllen</label>
               <textarea class="form-control" id="hw-content-editor" placeholder="Dokument-Inhalt erscheint hier..."></textarea>
             </div>
-            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px">
-              <button class="btn btn-secondary" onclick="resetHWUpload()">📄 Neues Dokument</button>
-              <button class="btn btn-primary btn-lg" onclick="printHWAsPDF()">🖨️ Als PDF speichern / Drucken</button>
+            <div class="form-group">
+              <label>📷 Fotos / Abfotos</label>
+              <div class="hw-photo-grid" id="hw-photo-grid"></div>
+              <input type="file" id="hw-photo-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleHWPhotos(this.files)">
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap">
+              <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
+              <button class="btn btn-success btn-lg" onclick="saveHomework()">💾 Speichern</button>
+              <button class="btn btn-primary btn-lg" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -733,13 +897,23 @@ tr:hover td{background:var(--blue-50)}
             </div>
           </div>
           <div class="settings-section">
+            <h3>📱 iPhone — Als App installieren</h3>
+            <div class="alert alert-blue">
+              <strong>Tipp:</strong> Öffne diese Seite in Safari → tippe auf <strong>Teilen ↑</strong> → <strong>„Zum Home-Bildschirm"</strong>.<br>
+              Dann startet die App wie eine echte App — ohne Adressleiste, mit vollem Bildschirm.
+            </div>
+          </div>
+          <div class="settings-section">
             <h3>ℹ️ Über diese App</h3>
             <div class="alert alert-blue">
               Josefs Vokabeltrainer läuft direkt im Browser — keine Installation nötig.<br>
               Alle Daten werden sicher in der Cloud gespeichert und sind auf jedem Gerät verfügbar.
             </div>
           </div>
-          <button class="btn btn-primary" onclick="saveSettings()">💾 Einstellungen speichern</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="saveSettings()">💾 Einstellungen speichern</button>
+            <button class="btn btn-danger" onclick="doLogout()">🚪 Abmelden</button>
+          </div>
         </div>
       </div>
     </div>
@@ -753,8 +927,20 @@ tr:hover td{background:var(--blue-50)}
     <div class="modal-title"><span id="modal-word-title">📝 Vokabel hinzufügen</span></div>
     <input type="hidden" id="edit-word-id">
     <div class="form-row">
-      <div class="form-group"><label>🇩🇪 Deutsch *</label><input class="form-control" id="ew-de" placeholder="z.B. Haus"></div>
-      <div class="form-group"><label>🇮🇹 Italienisch *</label><input class="form-control" id="ew-it" placeholder="z.B. casa"></div>
+      <div class="form-group">
+        <label>🇩🇪 Deutsch *</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-control" id="ew-de" placeholder="z.B. Haus" style="flex:1">
+          <button class="btn-mic" onclick="openMicModal('de-DE','vocab-de')" title="Deutsch sprechen">🎤</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>🇮🇹 Italienisch *</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-control" id="ew-it" placeholder="z.B. casa" style="flex:1">
+          <button class="btn-mic" onclick="openMicModal('it-IT','vocab-it')" title="Italiano parlare">🎤</button>
+        </div>
+      </div>
     </div>
     <div class="form-group"><label>Kategorie</label><input class="form-control" id="ew-cat" placeholder="z.B. Nomen, Verben, Adjektive..."></div>
     <div class="modal-actions">
@@ -793,6 +979,41 @@ tr:hover td{background:var(--blue-50)}
   </button>
 </nav>
 
+<!-- ═══ MIC MODAL ════════════════════════════════════════════ -->
+<div id="mic-overlay" class="mic-overlay" onclick="if(event.target===this)closeMicModal()">
+  <div class="mic-modal">
+    <div class="mic-modal-title">🎤 Spracheingabe</div>
+    <div class="mic-modal-sub" id="mic-modal-sub">Sprache wählen, dann Mikrofon-Taste drücken</div>
+    <div class="mic-lang-tabs">
+      <button class="mic-lang-btn active" id="mic-btn-de" onclick="setMicLang('de-DE')">🇩🇪 Deutsch</button>
+      <button class="mic-lang-btn" id="mic-btn-it" onclick="setMicLang('it-IT')">🇮🇹 Italiano</button>
+    </div>
+    <div class="mic-circle-wrap">
+      <div id="mic-pulse1" class="mic-pulse-ring" style="display:none"></div>
+      <div id="mic-pulse2" class="mic-pulse-ring pulse2" style="display:none"></div>
+      <button id="mic-circle" class="mic-circle" onclick="toggleMicRecord()">
+        <span id="mic-circle-icon">🎤</span>
+      </button>
+    </div>
+    <div class="mic-waves" id="mic-waves" style="display:none">
+      <div class="mic-wave-bar"></div>
+      <div class="mic-wave-bar"></div>
+      <div class="mic-wave-bar"></div>
+      <div class="mic-wave-bar"></div>
+      <div class="mic-wave-bar"></div>
+      <div class="mic-wave-bar"></div>
+      <div class="mic-wave-bar"></div>
+    </div>
+    <div class="mic-status" id="mic-status-text">Tippen zum Starten</div>
+    <div class="mic-transcript" id="mic-transcript"></div>
+    <div class="mic-interim" id="mic-interim"></div>
+    <div class="mic-actions">
+      <button class="btn btn-secondary btn-lg" onclick="closeMicModal()">✕ Abbrechen</button>
+      <button class="btn btn-success btn-lg" id="mic-confirm-btn" onclick="confirmMicInput()" style="display:none">✓ Übernehmen</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // SUPABASE
@@ -808,6 +1029,7 @@ let vocabulary = [];
 let allTests   = [];
 let settings   = {};
 
+let allHomework=[], currentHWId=null, hwPhotos=[];
 let learnCards=[], learnIdx=0, learnCorrect=0, learnWrong=0, learnDir='de_it', cardFlipped=false;
 let testQuestions=[], testIdx=0, testResults=[], testDir='de_it', testSeconds=0, testTimer=null;
 let previewWords=[];
@@ -820,7 +1042,7 @@ let dashChart, resultsChart, distChart;
 // ══════════════════════════════════════════════════════════════
 async function init() {
   try {
-    await Promise.all([loadVocabulary(), loadSettings(), loadTests()]);
+    await Promise.all([loadVocabulary(), loadSettings(), loadTests(), loadHomework()]);
     computeCategories();
     updateUI();
   } catch(e) {
@@ -939,6 +1161,7 @@ function showView(name) {
   document.getElementById('topbar-title').textContent    = title;
   document.getElementById('topbar-subtitle').textContent = sub;
   if (name === 'results') renderResultsView();
+  if (name === 'homework') showHWList();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1125,6 +1348,30 @@ function flipCard() {
   document.getElementById('fc-actions').style.display     = 'flex';
   document.getElementById('fc-action-hint').style.display = 'none';
 }
+
+// ── Swipe-Gesten für Karteikarten ───────────────────────────
+(function setupCardSwipe() {
+  let tx=0, ty=0, moved=false;
+  document.addEventListener('touchstart', e => {
+    const card = e.target.closest('.flashcard-scene');
+    if (!card) return;
+    tx = e.touches[0].clientX; ty = e.touches[0].clientY; moved = false;
+  }, {passive:true});
+  document.addEventListener('touchmove', e => {
+    if (!tx) return;
+    if (Math.abs(e.touches[0].clientX - tx) > 8) moved = true;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (!tx) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    const dy = e.changedTouches[0].clientY - ty;
+    tx = 0;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // not a horizontal swipe
+    if (!cardFlipped) { flipCard(); return; }
+    if (dx < -50) answerCard(false); // swipe left = falsch
+    else if (dx >  50) answerCard(true);  // swipe right = richtig
+  }, {passive:true});
+})();
 
 async function answerCard(correct) {
   const w = learnCards[learnIdx];
@@ -1318,15 +1565,26 @@ async function finishTest() {
   const wrongWords = testResults.filter(r => !r.correct);
   const wrongDiv   = document.getElementById('tr-wrong');
   if (wrongWords.length > 0) {
-    wrongDiv.innerHTML = `<div style="font-size:14px;font-weight:700;color:var(--gray-800);margin-bottom:10px">Falsch beantwortet:</div>` +
+    wrongDiv.innerHTML =
+      `<div style="font-size:15px;font-weight:700;color:var(--gray-800);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+         <span style="background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 12px;font-size:14px">${wrongWords.length} falsch</span>
+         Noch üben:
+       </div>` +
       wrongWords.map(r => `
         <div class="wrong-item">
-          <span class="wi-q">${esc(r.question)}</span>
-          <span class="wi-ans">→ du: "${esc(r.given)}"</span>
-          <span class="wi-correct">✅ ${esc(r.expected)}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:22px">❌</span>
+            <span style="font-size:18px;font-weight:800;color:var(--blue-800)">${esc(r.question)}</span>
+          </div>
+          <div style="font-size:14px;color:var(--gray-500);padding-left:30px">
+            Deine Antwort: <span style="color:var(--red);font-weight:700">${r.given ? '"'+esc(r.given)+'"' : '—'}</span>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);padding-left:30px;display:flex;align-items:center;gap:6px">
+            ✅ Richtig: <span>${esc(r.expected)}</span>
+          </div>
         </div>`).join('');
   } else {
-    wrongDiv.innerHTML = '<div style="color:var(--green);font-weight:700;margin-top:12px">🎉 Alle Fragen richtig!</div>';
+    wrongDiv.innerHTML = '<div style="color:var(--green);font-weight:700;margin-top:12px;font-size:16px">🎉 Alle Fragen richtig! Perfekt!</div>';
   }
 
   await loadVocabulary();
@@ -1537,47 +1795,227 @@ function setTrDir(dir) {
   clearTrResult();
 }
 
+let trDebounce = null;
+
+function onTrInput() {
+  clearTrResult();
+  clearTimeout(trDebounce);
+  const text = document.getElementById('tr-input').value.trim();
+  if (text.length >= 2) trDebounce = setTimeout(runTranslate, 650);
+}
+
 function clearTrResult() {
   document.getElementById('tr-result').style.display = 'none';
   document.getElementById('tr-error').style.display  = 'none';
   trLastResult = null;
 }
 
-function runTranslate() {
+async function runTranslate() {
+  clearTimeout(trDebounce);
   const text = document.getElementById('tr-input').value.trim();
   if (!text) return;
+  document.getElementById('tr-error').style.display = 'none';
 
+  // 1. Vokabel-Treffer (sofort, kein Netz nötig)
   const textLower = text.toLowerCase();
-  const matches = [];
-
-  vocabulary.forEach(w => {
-    if ((trDir==='de_it'||trDir==='auto') && w.deutsch.toLowerCase()===textLower)
-      matches.push({ source:w.deutsch, translation:w.italienisch, direction:'de_it', source_label:'aus Vokabeln' });
-    if ((trDir==='it_de'||trDir==='auto') && w.italienisch.toLowerCase()===textLower)
-      matches.push({ source:w.italienisch, translation:w.deutsch, direction:'it_de', source_label:'aus Vokabeln' });
-  });
-
-  if (matches.length > 0) {
-    const res = matches[0];
-    trLastResult = res;
-    const el = document.getElementById('tr-result');
-    el.style.display = '';
-    el.className = 'translator-result tr-vocab-match';
-    document.getElementById('tr-result-text').textContent   = res.translation;
-    const dirLabel = res.direction==='de_it' ? '🇩🇪 → 🇮🇹' : '🇮🇹 → 🇩🇪';
-    document.getElementById('tr-result-source').textContent = `${dirLabel}  ·  ${res.source_label}`;
-    document.getElementById('tr-add-vocab').style.display   = 'none';
-  } else {
-    document.getElementById('tr-error').style.display = '';
-    document.getElementById('tr-error').textContent   = '⚠️ Wort nicht in Vokabeln gefunden. Nur gespeicherte Wörter können übersetzt werden.';
+  for (const w of vocabulary) {
+    if ((trDir==='de_it'||trDir==='auto') && w.deutsch.toLowerCase()===textLower) {
+      trLastResult = {source:w.deutsch, translation:w.italienisch, direction:'de_it'};
+      showTrResult(w.italienisch, 'de_it', '📚 Aus deinen Vokabeln', true);
+      return;
+    }
+    if ((trDir==='it_de'||trDir==='auto') && w.italienisch.toLowerCase()===textLower) {
+      trLastResult = {source:w.italienisch, translation:w.deutsch, direction:'it_de'};
+      showTrResult(w.deutsch, 'it_de', '📚 Aus deinen Vokabeln', true);
+      return;
+    }
   }
+
+  // 2. Online-Übersetzung (MyMemory API)
+  await translateViaAPI(text);
+}
+
+// Übersetzungs-API-Kaskade: MyMemory → Lingva → Google-Link
+const TR_APIS = [
+  // 1. MyMemory (kostenlos, kein Key, 1000 Wörter/Tag)
+  async (text, src, tgt) => {
+    const r = await fetchWithTimeout(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${src}|${tgt}`, 7000);
+    const d = await r.json();
+    if (String(d.responseStatus) !== '200') throw new Error('MyMemory: ' + (d.responseDetails||'Fehler'));
+    const t = d.responseData.translatedText;
+    if (!t || t.toUpperCase() === text.toUpperCase()) throw new Error('MyMemory: keine Übersetzung');
+    return t;
+  },
+  // 2. Lingva (Google-Translate-Spiegel, kostenlos, kein Key)
+  async (text, src, tgt) => {
+    const r = await fetchWithTimeout(
+      `https://lingva.ml/api/v1/${src}/${tgt}/${encodeURIComponent(text)}`, 7000);
+    const d = await r.json();
+    if (!d.translation) throw new Error('Lingva: kein Ergebnis');
+    return d.translation;
+  },
+  // 3. translate.fedilab.app (LibreTranslate-Instanz)
+  async (text, src, tgt) => {
+    const r = await fetchWithTimeout('https://translate.fedilab.app/translate', 7000, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text, source: src, target: tgt, format: 'text' })
+    });
+    const d = await r.json();
+    if (!d.translatedText) throw new Error('LibreTranslate: kein Ergebnis');
+    return d.translatedText;
+  }
+];
+
+function fetchWithTimeout(url, ms, opts) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...(opts||{}), signal: ctrl.signal })
+    .finally(() => clearTimeout(timer));
+}
+
+async function translateViaAPI(text) {
+  let src, tgt;
+  if      (trDir==='de_it') { src='de'; tgt='it'; }
+  else if (trDir==='it_de') { src='it'; tgt='de'; }
+  else { src = detectLang(text); tgt = src==='de' ? 'it' : 'de'; }
+
+  // Lade-Zustand anzeigen
+  const el = document.getElementById('tr-result');
+  el.style.display = '';
+  el.className = 'translator-result';
+  document.getElementById('tr-result-text').innerHTML =
+    `<span style="opacity:.5;font-size:18px">⏳ Übersetze<span class="tr-loading-dots"></span></span>`;
+  document.getElementById('tr-result-source').textContent = '';
+  document.getElementById('tr-add-vocab').style.display   = 'none';
+  document.getElementById('tr-error').style.display       = 'none';
+
+  // APIs nacheinander probieren
+  for (const api of TR_APIS) {
+    try {
+      const translation = await api(text, src, tgt);
+      const dir = src==='de' ? 'de_it' : 'it_de';
+      trLastResult = { source:text, translation, direction:dir };
+      showTrResult(translation, dir, '🌐 Online-Übersetzung', false);
+      document.getElementById('tr-add-vocab').style.display = '';
+      return; // Erfolg → fertig
+    } catch(e) {
+      console.warn('Übersetzungs-API fehlgeschlagen:', e.message);
+    }
+  }
+
+  // Alle APIs gescheitert → Google Translate Link als Fallback
+  el.style.display = 'none';
+  const errEl = document.getElementById('tr-error');
+  const gtUrl  = `https://translate.google.com/?sl=${src}&tl=${tgt}&text=${encodeURIComponent(text)}&op=translate`;
+  errEl.style.display = '';
+  errEl.innerHTML = `⚠️ Automatische Übersetzung nicht verfügbar (kein Internet oder Limit erreicht).<br>
+    <a href="${gtUrl}" target="_blank" rel="noopener"
+       style="display:inline-block;margin-top:8px;color:var(--blue-700);font-weight:700;text-decoration:none">
+       🔗 In Google Übersetzer öffnen →
+    </a>`;
+}
+
+function showTrResult(translation, direction, label, isVocab) {
+  const el = document.getElementById('tr-result');
+  el.style.display = '';
+  el.className = 'translator-result' + (isVocab ? ' tr-vocab-match' : '');
+  document.getElementById('tr-result-text').textContent = translation;
+  const flag = direction==='de_it' ? '🇩🇪 → 🇮🇹' : '🇮🇹 → 🇩🇪';
+  document.getElementById('tr-result-source').textContent = `${flag}  ·  ${label}`;
+  if (!isVocab) document.getElementById('tr-add-vocab').style.display = '';
+  else          document.getElementById('tr-add-vocab').style.display = 'none';
+}
+
+function detectLang(text) {
+  const de = (text.match(/[äöüßÄÖÜ]/g)||[]).length * 3 +
+             (text.match(/\b(der|die|das|ist|und|nicht|ich|du|er|sie|wir|auf|für|von|mit|den|ein|eine|aber)\b/gi)||[]).length;
+  const it = (text.match(/[àèéìòùÀÈÉÌÒÙ]/g)||[]).length * 3 +
+             (text.match(/\b(il|la|lo|le|gli|è|un|una|per|non|che|con|del|della|sono|ho|hai|come)\b/gi)||[]).length;
+  return de >= it ? 'de' : 'it';
 }
 
 function swapTranslation() {
   if (!trLastResult) return;
   document.getElementById('tr-input').value = trLastResult.translation;
-  setTrDir(trLastResult.direction==='de_it'?'it_de':'de_it');
+  setTrDir(trLastResult.direction==='de_it' ? 'it_de' : 'de_it');
   runTranslate();
+}
+
+// ── OCR / Kamera-Übersetzer ──────────────────────────────────
+let ocrWorker = null;
+
+function startOCR() {
+  document.getElementById('ocr-file-input').click();
+}
+
+function closeOCR() {
+  document.getElementById('ocr-section').style.display = 'none';
+  document.getElementById('ocr-file-input').value = '';
+}
+
+async function doOCR(file) {
+  if (!file) return;
+  const section = document.getElementById('ocr-section');
+  section.style.display = '';
+  setOcrStatus('📷 Bild wird geladen…', 0);
+
+  // Bildvorschau
+  const previewUrl = URL.createObjectURL(file);
+  const previewEl  = document.getElementById('ocr-preview-img');
+  previewEl.src    = previewUrl;
+  previewEl.style.display = '';
+  document.getElementById('ocr-extracted').style.display = 'none';
+
+  try {
+    // Tesseract.js lazy laden (erstes Mal ~2 MB + Sprachdaten ~8 MB, danach gecacht)
+    if (!window.Tesseract) {
+      setOcrStatus('⬇️ OCR-Engine wird geladen (einmalig ~10 MB)…', 10);
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    }
+
+    setOcrStatus('🔍 Text wird erkannt…', 30);
+
+    const { data } = await Tesseract.recognize(file, 'deu+ita', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          setOcrStatus(`🔍 ${Math.round(m.progress * 100)}% erkannt…`, 30 + m.progress * 65);
+        }
+      }
+    });
+
+    const rawText = (data.text || '').trim().replace(/\n{3,}/g, '\n\n');
+    if (!rawText) {
+      setOcrStatus('❌ Kein Text erkannt — schärferes Foto versuchen.', 0);
+      return;
+    }
+
+    setOcrStatus(`✅ Erkannt (${Math.round(data.confidence||0)}% Genauigkeit)`, 100);
+    document.getElementById('ocr-extracted').textContent = rawText;
+    document.getElementById('ocr-extracted').style.display = '';
+
+    // Text in Eingabefeld füllen + auto-übersetzen
+    document.getElementById('tr-input').value = rawText;
+    setTimeout(runTranslate, 200);
+
+  } catch(e) {
+    setOcrStatus('❌ Fehler: ' + e.message, 0);
+  }
+}
+
+function setOcrStatus(msg, pct) {
+  document.getElementById('ocr-status-txt').textContent = msg;
+  document.getElementById('ocr-bar-fill').style.width   = Math.min(100, pct) + '%';
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('Laden fehlgeschlagen: ' + src));
+    document.head.appendChild(s);
+  });
 }
 
 async function addTranslationToVocab() {
@@ -1609,48 +2047,372 @@ async function saveSettings() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// VOICE INPUT
+// MIKROFON / VOICE INPUT
 // ══════════════════════════════════════════════════════════════
-let voiceRecognition = null, voiceActive = false;
+let voiceRecognition = null;
+let voiceActive      = false;
+let micLang          = 'de-DE';
+let micFinalText     = '';
+let micContext       = 'translator'; // 'translator' | 'vocab-de' | 'vocab-it'
 
-function toggleVoiceInput() {
-  const SR  = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const btn = document.getElementById('tr-mic-btn');
-  if (!SR) { toast('Spracheingabe nicht unterstützt. Bitte Chrome oder Edge verwenden.', 'error'); return; }
-  if (voiceActive && voiceRecognition) { voiceRecognition.stop(); return; }
+function openMicModal(lang, context) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    toast('Spracheingabe wird von diesem Browser nicht unterstützt.\niPhone: Safari verwenden (ab iOS 14.5).', 'error');
+    return;
+  }
+  micContext    = context || 'translator';
+  micFinalText  = '';
+  setMicLang(lang || 'de-DE');
+
+  // Reset UI
+  document.getElementById('mic-transcript').textContent   = '';
+  document.getElementById('mic-interim').textContent      = '';
+  document.getElementById('mic-status-text').textContent  = 'Tippen zum Starten';
+  document.getElementById('mic-confirm-btn').style.display = 'none';
+  document.getElementById('mic-circle').classList.remove('recording');
+  document.getElementById('mic-pulse1').style.display = 'none';
+  document.getElementById('mic-pulse2').style.display = 'none';
+  document.getElementById('mic-waves').style.display  = 'none';
+
+  // Context subtitle
+  const ctxLabels = {
+    translator: 'Übersetzer',
+    'vocab-de': 'Vokabel Deutsch',
+    'vocab-it': 'Vokabel Italiano',
+  };
+  document.getElementById('mic-modal-sub').textContent =
+    `→ ${ctxLabels[micContext] || micContext}`;
+
+  document.getElementById('mic-overlay').classList.add('open');
+}
+
+function setMicLang(lang) {
+  micLang = lang;
+  document.getElementById('mic-btn-de').classList.toggle('active', lang === 'de-DE');
+  document.getElementById('mic-btn-it').classList.toggle('active', lang === 'it-IT');
+}
+
+function toggleMicRecord() {
+  if (voiceActive) stopMicRecording(true);
+  else             startMicRecording();
+}
+
+function startMicRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR || voiceActive) return;
+
+  if (voiceRecognition) { try { voiceRecognition.abort(); } catch(e){} }
+
   voiceRecognition = new SR();
-  voiceRecognition.lang = trDir==='it_de' ? 'it-IT' : 'de-DE';
-  voiceRecognition.continuous     = false;
-  voiceRecognition.interimResults = true;
-  voiceActive = true;
-  btn.textContent      = '🔴 Aufnahme läuft … (klicken zum Stoppen)';
-  btn.style.background = 'var(--red-bg)';
-  btn.style.color      = 'var(--red)';
+  voiceRecognition.lang            = micLang;
+  voiceRecognition.continuous      = false;
+  voiceRecognition.interimResults  = true;
+  voiceRecognition.maxAlternatives = 1;
+
+  voiceActive  = true;
+  micFinalText = '';
+
+  // UI → recording state
+  document.getElementById('mic-circle').classList.add('recording');
+  document.getElementById('mic-pulse1').style.display = '';
+  document.getElementById('mic-pulse2').style.display = '';
+  document.getElementById('mic-waves').style.display  = 'flex';
+  document.getElementById('mic-confirm-btn').style.display = 'none';
+  document.getElementById('mic-transcript').textContent = '';
+  document.getElementById('mic-interim').textContent    = '';
+  document.getElementById('mic-status-text').textContent =
+    micLang === 'de-DE' ? '🔴 Auf Deutsch sprechen …' : '🔴 Parlare in italiano …';
+
   voiceRecognition.onresult = e => {
-    let interim='', final='';
-    for (let i=e.resultIndex; i<e.results.length; i++) {
-      if (e.results[i].isFinal) final   += e.results[i][0].transcript;
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final   += e.results[i][0].transcript + ' ';
       else                       interim += e.results[i][0].transcript;
     }
-    document.getElementById('tr-input').value = final || interim;
-    if (final) setTimeout(runTranslate, 300);
+    if (final) {
+      micFinalText += final;
+      document.getElementById('mic-transcript').textContent = micFinalText.trim();
+      document.getElementById('mic-interim').textContent    = '';
+    } else {
+      document.getElementById('mic-interim').textContent = interim;
+    }
   };
-  voiceRecognition.onerror = e => { toast('Mikrofon-Fehler: '+e.error, 'error'); resetVoiceBtn(); };
-  voiceRecognition.onend   = () => resetVoiceBtn();
-  voiceRecognition.start();
+
+  voiceRecognition.onerror = e => {
+    const msgs = {
+      'not-allowed': '⚠️ Mikrofon-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.',
+      'no-speech'  : 'Kein Ton erkannt — bitte nochmal versuchen.',
+      'network'    : 'Netzwerkfehler. Internetverbindung prüfen.',
+      'aborted'    : '',
+    };
+    const msg = msgs[e.error] || ('Mikrofon-Fehler: ' + e.error);
+    if (msg) toast(msg, 'error');
+    stopMicRecording(false);
+  };
+
+  voiceRecognition.onend = () => { stopMicRecording(false); };
+
+  try {
+    voiceRecognition.start();
+  } catch(e) {
+    toast('Mikrofon konnte nicht gestartet werden.', 'error');
+    stopMicRecording(false);
+  }
 }
 
-function resetVoiceBtn() {
-  voiceActive = false; voiceRecognition = null;
-  const btn = document.getElementById('tr-mic-btn');
-  if (!btn) return;
-  btn.textContent = '🎤 Sprechen';
-  btn.style.background = btn.style.color = '';
+function stopMicRecording(manual) {
+  voiceActive = false;
+  if (voiceRecognition) {
+    try { voiceRecognition.stop(); } catch(e){}
+    voiceRecognition = null;
+  }
+  // UI → idle state
+  document.getElementById('mic-circle').classList.remove('recording');
+  document.getElementById('mic-pulse1').style.display = 'none';
+  document.getElementById('mic-pulse2').style.display = 'none';
+  document.getElementById('mic-waves').style.display  = 'none';
+  document.getElementById('mic-interim').textContent  = '';
+
+  const text = (document.getElementById('mic-transcript').textContent || micFinalText).trim();
+  if (text) {
+    micFinalText = text;
+    document.getElementById('mic-status-text').textContent  = '✅ Erkannt – übernehmen?';
+    document.getElementById('mic-confirm-btn').style.display = '';
+  } else {
+    document.getElementById('mic-status-text').textContent = 'Tippen zum Starten';
+  }
 }
+
+function confirmMicInput() {
+  const text = micFinalText.trim();
+  closeMicModal();
+  if (!text) return;
+
+  if (micContext === 'vocab-de') {
+    document.getElementById('ew-de').value = text;
+    openModal('modal-word');
+    return;
+  }
+  if (micContext === 'vocab-it') {
+    document.getElementById('ew-it').value = text;
+    openModal('modal-word');
+    return;
+  }
+  // Default: translator
+  document.getElementById('tr-input').value = text;
+  if (micLang === 'de-DE') setTrDir('de_it');
+  else                     setTrDir('it_de');
+  showView('translator');
+  setTimeout(runTranslate, 80);
+  toast(`🎤 "${text.slice(0,40)}${text.length>40?'…':''}" erkannt`, 'success');
+}
+
+function closeMicModal() {
+  if (voiceRecognition) { try { voiceRecognition.abort(); } catch(e){} voiceRecognition = null; }
+  voiceActive = false;
+  document.getElementById('mic-overlay').classList.remove('open');
+}
+
+// Rückwärtskompatibilität
+function toggleVoiceInput() { openMicModal(trDir === 'it_de' ? 'it-IT' : 'de-DE', 'translator'); }
+function resetVoiceBtn() {}
 
 // ══════════════════════════════════════════════════════════════
 // HOMEWORK
 // ══════════════════════════════════════════════════════════════
+async function loadHomework() {
+  try {
+    const { data, error } = await sb.from('homework').select('*').order('created_at', { ascending: false });
+    if (error) {
+      if (error.code === '42P01') { allHomework = []; return; }
+      throw error;
+    }
+    allHomework = data || [];
+  } catch(e) {
+    console.warn('Homework:', e.message);
+    allHomework = [];
+  }
+}
+
+function renderHomeworkList() {
+  const container = document.getElementById('hw-list-items');
+  const emptyEl   = document.getElementById('hw-list-empty');
+  const countEl   = document.getElementById('hw-list-count');
+  const setupEl   = document.getElementById('hw-setup-alert');
+
+  // Table might not exist yet → show setup hint
+  setupEl.style.display = 'none';
+
+  if (!allHomework.length) {
+    emptyEl.style.display = '';
+    container.innerHTML   = '';
+    countEl.textContent   = 'Keine Einträge';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  countEl.textContent   = allHomework.length + ' Hausaufgabe' + (allHomework.length !== 1 ? 'n' : '');
+  container.innerHTML   = allHomework.map(hw => {
+    const photos = hw.photos ? (typeof hw.photos === 'string' ? JSON.parse(hw.photos) : hw.photos) : [];
+    const thumb  = photos.length > 0 ? `<img src="${photos[0]}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0">` : `<div style="font-size:32px;width:56px;text-align:center">📄</div>`;
+    const photoBadge = photos.length > 0 ? `<span class="hw-photo-count">📷 ${photos.length}</span>` : '';
+    return `
+    <div class="card" style="margin-bottom:10px;display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer" onclick="openSavedHomework('${hw.id}')">
+      ${thumb}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:700;color:var(--blue-800)">${esc(hw.title)}${photoBadge}</div>
+        <div style="font-size:13px;color:var(--gray-400);margin-top:2px">
+          ${fmtDate(hw.created_at)}${hw.updated_at && hw.updated_at !== hw.created_at ? ' · bearbeitet ' + fmtDate(hw.updated_at) : ''}
+        </div>
+        <div style="font-size:13px;color:var(--gray-600);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${esc((hw.content||'').replace(/\n/g,' ').slice(0,100))}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openSavedHomework('${hw.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteHomework('${hw.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showHWList() {
+  document.getElementById('hw-list-section').style.display   = '';
+  document.getElementById('hw-upload-section').style.display = 'none';
+  document.getElementById('hw-editor-section').style.display = 'none';
+  currentHWId = null;
+  renderHomeworkList();
+}
+
+function showHWNew() {
+  currentHWId = null;
+  hwPhotos    = [];
+  document.getElementById('hw-list-section').style.display   = 'none';
+  document.getElementById('hw-upload-section').style.display = '';
+  document.getElementById('hw-editor-section').style.display = 'none';
+  document.getElementById('hw-title-direct').value           = '';
+  document.getElementById('hw-content-direct').value         = '';
+  document.getElementById('hw-upload-status').textContent    = '';
+  document.getElementById('hw-file-input').value             = '';
+}
+
+function openSavedHomework(id) {
+  const hw = allHomework.find(h => h.id === id);
+  if (!hw) return;
+  currentHWId = id;
+  hwPhotos    = hw.photos ? (typeof hw.photos === 'string' ? JSON.parse(hw.photos) : hw.photos) : [];
+  document.getElementById('hw-title-input').value    = hw.title;
+  document.getElementById('hw-content-editor').value = hw.content;
+  document.getElementById('hw-doc-name').textContent  = hw.title;
+  document.getElementById('hw-list-section').style.display   = 'none';
+  document.getElementById('hw-upload-section').style.display = 'none';
+  document.getElementById('hw-editor-section').style.display = '';
+  renderHWPhotoGrid();
+}
+
+async function saveHomework() {
+  const title   = document.getElementById('hw-title-input').value.trim() || 'Hausaufgaben';
+  const content = document.getElementById('hw-content-editor').value;
+  const photos  = JSON.stringify(hwPhotos);
+  const now     = new Date().toISOString();
+  try {
+    if (currentHWId) {
+      const { error } = await sb.from('homework')
+        .update({ title, content, photos, updated_at: now })
+        .eq('id', currentHWId);
+      if (error) throw error;
+      const idx = allHomework.findIndex(h => h.id === currentHWId);
+      if (idx >= 0) Object.assign(allHomework[idx], { title, content, photos, updated_at: now });
+    } else {
+      const newId = crypto.randomUUID ? crypto.randomUUID() : (Math.random().toString(36).slice(2)+Date.now());
+      const { error } = await sb.from('homework')
+        .insert({ id: newId, title, content, photos, created_at: now, updated_at: now });
+      if (error) throw error;
+      currentHWId = newId;
+      allHomework.unshift({ id: newId, title, content, photos, created_at: now, updated_at: now });
+    }
+    document.getElementById('hw-doc-name').textContent = title;
+    toast('Hausaufgaben gespeichert! ✅', 'success');
+  } catch(e) {
+    if (e.code === '42P01' || (e.message && e.message.includes('42P01'))) {
+      document.getElementById('hw-setup-alert').style.display = '';
+      toast('Tabelle "homework" fehlt — siehe Setup-Hinweis.', 'error');
+    } else {
+      toast('Fehler: ' + e.message, 'error');
+    }
+  }
+}
+
+async function deleteHomework(id) {
+  if (!confirm('Diese Hausaufgaben wirklich löschen?')) return;
+  try {
+    const { error } = await sb.from('homework').delete().eq('id', id);
+    if (error) throw error;
+    allHomework = allHomework.filter(h => h.id !== id);
+    renderHomeworkList();
+    toast('Gelöscht.', 'info');
+  } catch(e) {
+    toast('Fehler: ' + e.message, 'error');
+  }
+}
+
+// ── Foto-Handling ────────────────────────────────────────────
+function renderHWPhotoGrid() {
+  const grid = document.getElementById('hw-photo-grid');
+  if (!grid) return;
+  grid.innerHTML = hwPhotos.map((b64, i) => `
+    <div class="hw-photo-thumb">
+      <img src="${b64}" alt="Foto ${i+1}">
+      <button class="pt-del" onclick="removeHWPhoto(${i})" title="Foto löschen">✕</button>
+    </div>`).join('') + `
+    <div class="hw-photo-add" onclick="document.getElementById('hw-photo-input').click()">
+      <span>📷</span><span>Foto</span>
+    </div>`;
+}
+
+function removeHWPhoto(idx) {
+  hwPhotos.splice(idx, 1);
+  renderHWPhotoGrid();
+}
+
+async function handleHWPhotos(files) {
+  for (const file of Array.from(files)) {
+    if (!file.type.startsWith('image/')) continue;
+    try {
+      const b64 = await compressImage(file, 1200, 0.78);
+      hwPhotos.push(b64);
+    } catch(e) {
+      toast('Foto konnte nicht geladen werden.', 'error');
+    }
+  }
+  document.getElementById('hw-photo-input').value = '';
+  renderHWPhotoGrid();
+}
+
+function compressImage(file, maxPx, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxPx || h > maxPx) {
+          if (w >= h) { h = Math.round(h * maxPx / w); w = maxPx; }
+          else        { w = Math.round(w * maxPx / h); h = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function handleHWDrop(e) {
   e.preventDefault();
   document.getElementById('hw-drop-zone').classList.remove('drag-over');
@@ -1669,12 +2431,15 @@ async function handleHWFile(file) {
     const result = await mammoth.extractRawText({ arrayBuffer });
     const content = result.value;
     if (!content.trim()) { status.textContent = '❌ Kein Text gefunden.'; return; }
+    currentHWId = null;
+    hwPhotos    = [];
     document.getElementById('hw-content-editor').value = content;
     document.getElementById('hw-title-input').value    = file.name.replace(/\.[^.]+$/,'');
     document.getElementById('hw-doc-name').textContent = file.name;
     document.getElementById('hw-upload-section').style.display = 'none';
     document.getElementById('hw-editor-section').style.display = '';
     status.textContent = '';
+    renderHWPhotoGrid();
     toast('Dokument geladen!', 'success');
   } catch(e) {
     status.textContent = '❌ Fehler: ' + e.message;
@@ -1685,18 +2450,14 @@ async function handleHWFile(file) {
 function openDirectEditor() {
   const title   = document.getElementById('hw-title-direct').value.trim() || 'Hausaufgaben';
   const content = document.getElementById('hw-content-direct').value;
+  currentHWId = null;
+  hwPhotos    = [];
   document.getElementById('hw-title-input').value    = title;
   document.getElementById('hw-content-editor').value = content;
   document.getElementById('hw-doc-name').textContent = title;
   document.getElementById('hw-upload-section').style.display = 'none';
   document.getElementById('hw-editor-section').style.display = '';
-}
-
-function resetHWUpload() {
-  document.getElementById('hw-upload-section').style.display = '';
-  document.getElementById('hw-editor-section').style.display = 'none';
-  document.getElementById('hw-upload-status').textContent    = '';
-  document.getElementById('hw-file-input').value             = '';
+  renderHWPhotoGrid();
 }
 
 function printHWAsPDF() {
@@ -1798,13 +2559,26 @@ function uuid() {
 // ══════════════════════════════════════════════════════════════
 const LOGIN_USER = 'josef@hotel-arabella.at';
 const LOGIN_PASS = 'washington.1';
-const SESSION_KEY = 'vt_auth';
+const SESSION_KEY = 'vt_auth_v2';   // v2 → localStorage statt sessionStorage
+
+function togglePWVis() {
+  const inp = document.getElementById('login-pw');
+  const eye = document.getElementById('pw-eye');
+  if (inp.type === 'password') { inp.type = 'text';     eye.textContent = '🙈'; }
+  else                         { inp.type = 'password'; eye.textContent = '👁';  }
+}
 
 function doLogin() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pw    = document.getElementById('login-pw').value;
+  const email    = document.getElementById('login-email').value.trim().toLowerCase();
+  const pw       = document.getElementById('login-pw').value;
+  const remember = document.getElementById('login-remember')?.checked !== false;
   if (email === LOGIN_USER && pw === LOGIN_PASS) {
-    sessionStorage.setItem(SESSION_KEY, '1');
+    if (remember) {
+      localStorage.setItem(SESSION_KEY, '1');
+    } else {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      localStorage.removeItem(SESSION_KEY);
+    }
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('loading-overlay').style.display = 'flex';
     init();
@@ -1815,8 +2589,18 @@ function doLogin() {
   }
 }
 
+function doLogout() {
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
 function checkLogin() {
-  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+  // Pre-fill email for convenience
+  const emailEl = document.getElementById('login-email');
+  if (emailEl && !emailEl.value) emailEl.value = LOGIN_USER;
+
+  if (localStorage.getItem(SESSION_KEY) === '1' || sessionStorage.getItem(SESSION_KEY) === '1') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('loading-overlay').style.display = 'flex';
     init();
