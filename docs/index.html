@@ -219,6 +219,17 @@ tr:hover td{background:var(--blue-50)}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--blue-300);border-radius:99px}
 #hw-content-editor{min-height:420px;line-height:1.9;resize:vertical}
+/* ── Hausaufgaben-Foto / Lückenfüller ── */
+.hw-fill-photo{max-width:100%;max-height:200px;border-radius:var(--radius-sm);display:block;margin:0 auto 16px;box-shadow:var(--shadow)}
+.hw-fill-line{font-size:16px;line-height:2.2;margin-bottom:4px;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px}
+.hw-fill-line.is-question{background:var(--blue-50);padding:8px 12px;border-radius:var(--radius-sm);border-left:3px solid var(--blue-400);margin-bottom:8px}
+.hw-fill-line.is-text{color:var(--gray-600);font-size:15px}
+.hw-blank{display:inline-block;min-width:130px;border:none;border-bottom:2.5px solid var(--blue-400);background:rgba(33,150,243,.07);padding:3px 8px;font-size:16px;font-weight:700;color:var(--blue-800);border-radius:4px 4px 0 0;vertical-align:baseline;transition:all .15s;font-family:inherit}
+.hw-blank:focus{outline:none;border-bottom-color:var(--blue-700);background:var(--blue-100)}
+.hw-blank::placeholder{color:var(--blue-300);font-weight:400;font-size:14px}
+.hw-fill-num{color:var(--blue-500);font-weight:800;font-size:15px;min-width:24px}
+.hw-fill-progress{height:8px;background:var(--gray-200);border-radius:99px;overflow:hidden;margin:8px 0}
+.hw-fill-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue-400),var(--blue-600));width:0%;transition:width .4s;border-radius:99px}
 .hw-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-200);margin-bottom:16px}
 #loading-overlay{position:fixed;inset:0;background:rgba(13,33,55,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:16px;font-size:18px}
 .spinner{width:48px;height:48px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
@@ -375,6 +386,16 @@ tr:hover td{background:var(--blue-50)}
 .btn-mic{background:var(--blue-50);color:var(--blue-600);border:1.5px solid var(--blue-200);border-radius:var(--radius-sm);font-size:18px;padding:8px 12px;cursor:pointer;transition:all .15s}
 .btn-mic:hover{background:var(--blue-600);color:#fff}
 
+/* ── Vokabel-Validierung ── */
+.vc-box{border-radius:var(--radius-sm);padding:13px 15px;margin:12px 0 4px;border:2px solid transparent}
+.vc-neutral{background:var(--gray-100);border-color:var(--gray-200)}
+.vc-ok{background:var(--green-bg);border-color:var(--green)}
+.vc-warn{background:var(--orange-bg);border-color:var(--orange)}
+.vc-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:8px}
+.vc-content{font-size:14px;line-height:1.8;color:var(--gray-800)}
+.vc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.vc-suggestion{display:inline-block;background:#fff;border:2px solid var(--blue-300);border-radius:var(--radius-sm);padding:4px 12px;font-size:16px;font-weight:800;color:var(--blue-800);margin:4px 0}
+
 /* ── OCR / Kamera-Übersetzer ── */
 .ocr-section{margin-top:14px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--blue-200);background:var(--blue-50)}
 .ocr-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--blue-100);border-bottom:1px solid var(--blue-200)}
@@ -519,6 +540,7 @@ tr:hover td{background:var(--blue-50)}
           <option value="">Alle Kategorien</option>
         </select>
         <button class="btn btn-primary" onclick="openAddModal()">+ Vokabel hinzufügen</button>
+        <button class="btn btn-secondary" onclick="removeDuplicates()" title="Doppelte Vokabeln erkennen und entfernen">🧹 Duplikate</button>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th>🇩🇪 Deutsch</th><th>🇮🇹 Italienisch</th><th>Kategorie</th><th>Richtig</th><th>Falsch</th><th>Serie</th><th>Status</th><th>Aktionen</th></tr></thead>
@@ -825,6 +847,19 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
           <div class="section-header" style="margin-bottom:16px">
             <button class="btn btn-secondary" onclick="showHWList()">← Zurück zur Liste</button>
           </div>
+          <!-- NEU: Aufgaben abfotografieren -->
+          <div class="card" style="margin-bottom:20px;border:2px solid var(--blue-300);background:var(--blue-50)">
+            <div class="section-title" style="margin-bottom:8px;color:var(--blue-700)">📷 Aufgabenblatt fotografieren</div>
+            <div style="font-size:15px;color:var(--gray-600);margin-bottom:14px">
+              Foto vom Aufgabenblatt machen — Lücken (<span style="font-family:monospace">___</span>) werden automatisch erkannt
+              und als ausfüllbare Felder angezeigt.
+            </div>
+            <button class="btn btn-primary btn-lg" style="width:100%" onclick="startHWOCR()">
+              📷 Aufgaben fotografieren / hochladen
+            </button>
+            <input type="file" id="hw-ocr-input" accept="image/*" capture="environment" style="display:none" onchange="doHWOCR(this.files[0])">
+          </div>
+
           <div class="card" style="margin-bottom:20px">
             <div class="section-title" style="margin-bottom:16px">📤 Dokument hochladen</div>
             <div class="alert alert-blue" style="margin-bottom:16px">
@@ -851,6 +886,42 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <textarea class="form-control" id="hw-content-direct" style="min-height:200px;line-height:1.9" placeholder="Hier Text eintippen…"></textarea>
             </div>
             <button class="btn btn-primary btn-lg" onclick="openDirectEditor()">Bearbeiten & Speichern →</button>
+          </div>
+        </div>
+
+        <!-- FILL-IN: Foto-Lückenfüller -->
+        <div id="hw-fill-section" style="display:none">
+          <div class="section-header" style="margin-bottom:16px">
+            <div>
+              <div class="section-title">📷 Aufgaben ausfüllen</div>
+              <div class="section-sub" id="hw-fill-subtitle">Lücken erkannt</div>
+            </div>
+            <button class="btn btn-secondary" onclick="showHWNew()">← Zurück</button>
+          </div>
+          <div class="card">
+            <!-- OCR Fortschritt -->
+            <div id="hw-fill-ocr-progress" style="margin-bottom:16px">
+              <div style="font-size:14px;font-weight:600;color:var(--blue-600)" id="hw-fill-ocr-status">⏳ Text wird erkannt…</div>
+              <div class="hw-fill-progress"><div class="hw-fill-progress-bar" id="hw-fill-progress-bar"></div></div>
+            </div>
+            <!-- Foto-Vorschau -->
+            <img id="hw-fill-photo" class="hw-fill-photo" style="display:none">
+            <!-- Interaktives Formular -->
+            <div id="hw-fill-form" style="display:none">
+              <div class="form-group" style="margin-bottom:12px">
+                <label>Titel</label>
+                <input class="form-control" id="hw-fill-title" placeholder="z.B. Hausaufgaben Italiano">
+              </div>
+              <div style="font-size:14px;color:var(--gray-400);margin-bottom:12px">
+                💡 Tippe in die <span style="border-bottom:2.5px solid var(--blue-400);padding:0 6px;font-weight:700;color:var(--blue-700)">markierten Felder</span> deine Antworten
+              </div>
+              <div id="hw-fill-lines"></div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:flex-end">
+                <button class="btn btn-secondary" onclick="showHWNew()">← Abbrechen</button>
+                <button class="btn btn-secondary btn-lg" onclick="hwFillToEditor()">✏️ Im Editor öffnen</button>
+                <button class="btn btn-success btn-lg" onclick="hwFillSave()">💾 Antworten speichern</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -943,9 +1014,19 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
       </div>
     </div>
     <div class="form-group"><label>Kategorie</label><input class="form-control" id="ew-cat" placeholder="z.B. Nomen, Verben, Adjektive..."></div>
-    <div class="modal-actions">
+
+    <!-- Validierungs-Ergebnis -->
+    <div id="vocab-check-wrap" style="display:none">
+      <div id="vocab-check-box" class="vc-box vc-neutral">
+        <div class="vc-head"><span id="vc-icon">⏳</span><span id="vc-title">Wird geprüft…</span></div>
+        <div class="vc-content" id="vc-content"></div>
+        <div class="vc-actions" id="vc-actions"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions" id="vocab-modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-word')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveWord()">Speichern</button>
+      <button class="btn btn-primary" id="vocab-save-btn" onclick="saveWord()">💾 Speichern</button>
     </div>
   </div>
 </div>
@@ -1230,12 +1311,22 @@ function renderVocabTable() {
 // ══════════════════════════════════════════════════════════════
 // WORD CRUD
 // ══════════════════════════════════════════════════════════════
+let vcState = null; // null | 'checking' | 'ok' | 'warned'
+
+function resetVocabCheck() {
+  vcState = null;
+  document.getElementById('vocab-check-wrap').style.display = 'none';
+  document.getElementById('vocab-save-btn').disabled = false;
+  document.getElementById('vocab-save-btn').textContent = '💾 Speichern';
+}
+
 function openAddModal() {
   document.getElementById('edit-word-id').value = '';
   document.getElementById('modal-word-title').textContent = '📝 Vokabel hinzufügen';
-  document.getElementById('ew-de').value = '';
-  document.getElementById('ew-it').value = '';
+  document.getElementById('ew-de').value  = '';
+  document.getElementById('ew-it').value  = '';
   document.getElementById('ew-cat').value = '';
+  resetVocabCheck();
   openModal('modal-word');
 }
 
@@ -1247,33 +1338,157 @@ function openEditModal(id) {
   document.getElementById('ew-de').value  = w.deutsch;
   document.getElementById('ew-it').value  = w.italienisch;
   document.getElementById('ew-cat').value = w.category || '';
+  resetVocabCheck();
   openModal('modal-word');
 }
 
-async function saveWord() {
+async function saveWord(force = false) {
   const de  = document.getElementById('ew-de').value.trim();
   const it  = document.getElementById('ew-it').value.trim();
   const cat = document.getElementById('ew-cat').value.trim();
   const id  = document.getElementById('edit-word-id').value;
   if (!de || !it) { toast('Bitte Deutsch und Italienisch ausfüllen.', 'error'); return; }
 
+  if (!force && vcState !== 'ok') {
+    await runVocabCheck(de, it);
+    if (vcState === 'warned') return; // Nutzer muss erst entscheiden
+  }
+  await commitSaveWord(de, it, cat, id);
+}
+
+async function commitSaveWord(de, it, cat, id) {
+  document.getElementById('vocab-save-btn').disabled = true;
   if (id) {
-    const { data, error } = await sb.from('vocabulary').update({ deutsch:de, italienisch:it, category:cat }).eq('id', id).select().single();
-    if (error) { toast('Fehler: ' + error.message, 'error'); return; }
+    const { data, error } = await sb.from('vocabulary')
+      .update({ deutsch:de, italienisch:it, category:cat }).eq('id', id).select().single();
+    if (error) { toast('Fehler: ' + error.message, 'error'); document.getElementById('vocab-save-btn').disabled=false; return; }
     vocabulary = vocabulary.map(w => w.id === id ? data : w);
-    toast('Vokabel aktualisiert.', 'success');
+    toast('Vokabel aktualisiert. ✅', 'success');
   } else {
-    const word = { id: uuid(), deutsch:de, italienisch:it, category:cat,
-                   added_date: new Date().toISOString(), correct_count:0, wrong_count:0, streak:0, last_practiced:null };
+    const word = { id:uuid(), deutsch:de, italienisch:it, category:cat,
+                   added_date:new Date().toISOString(), correct_count:0, wrong_count:0, streak:0, last_practiced:null };
     const { error } = await sb.from('vocabulary').insert(word);
-    if (error) { toast('Fehler: ' + error.message, 'error'); return; }
+    if (error) { toast('Fehler: ' + error.message, 'error'); document.getElementById('vocab-save-btn').disabled=false; return; }
     vocabulary.push(word);
-    toast('Vokabel hinzugefügt.', 'success');
+    toast('Vokabel hinzugefügt! ✅', 'success');
   }
   closeModal('modal-word');
+  resetVocabCheck();
   computeCategories();
   renderVocabTable();
   document.getElementById('vocab-count').textContent = vocabulary.length;
+}
+
+// ── Vokabel-Prüfung ─────────────────────────────────────────
+async function runVocabCheck(de, it) {
+  vcState = 'checking';
+  const wrap = document.getElementById('vocab-check-wrap');
+  const box  = document.getElementById('vocab-check-box');
+  wrap.style.display = '';
+  box.className = 'vc-box vc-neutral';
+  document.getElementById('vc-icon').textContent    = '⏳';
+  document.getElementById('vc-title').textContent   = 'Überprüfe Übersetzung…';
+  document.getElementById('vc-content').innerHTML   = '';
+  document.getElementById('vc-actions').innerHTML   = '';
+  document.getElementById('vocab-save-btn').disabled = true;
+
+  try {
+    let suggestion = null;
+    // Versuche DE → IT über API
+    for (const api of TR_APIS) {
+      try { suggestion = await api(de, 'de', 'it'); break; }
+      catch(e) { /* nächste API */ }
+    }
+
+    if (!suggestion) {
+      // Kein Netz → Prüfung überspringen, direkt speichern
+      vcState = 'ok';
+      wrap.style.display = 'none';
+      document.getElementById('vocab-save-btn').disabled = false;
+      return;
+    }
+
+    if (isSimilar(it, suggestion)) {
+      // ✅ Korrekt
+      vcState = 'ok';
+      box.className = 'vc-box vc-ok';
+      document.getElementById('vc-icon').textContent  = '✅';
+      document.getElementById('vc-title').textContent = 'Übersetzung sieht korrekt aus!';
+      document.getElementById('vc-content').innerHTML =
+        `Wörterbuch bestätigt: <span class="vc-suggestion">${esc(suggestion)}</span>`;
+      document.getElementById('vocab-save-btn').disabled = false;
+      document.getElementById('vocab-save-btn').textContent = '💾 Speichern';
+    } else {
+      // ⚠️ Abweichung
+      vcState = 'warned';
+      box.className = 'vc-box vc-warn';
+      document.getElementById('vc-icon').textContent  = '⚠️';
+      document.getElementById('vc-title').textContent = 'Mögliche Fehleingabe – bitte prüfen!';
+      document.getElementById('vc-content').innerHTML = `
+        <div>Deine Eingabe:&nbsp; <strong style="color:var(--orange)">"${esc(it)}"</strong></div>
+        <div>Wörterbuch für <em>"${esc(de)}"</em>:&nbsp;
+          <span class="vc-suggestion">${esc(suggestion)}</span>
+        </div>
+        <div style="margin-top:6px;font-size:13px;color:var(--gray-600)">
+          Bist du sicher, dass <strong>"${esc(it)}"</strong> die richtige Übersetzung ist?
+        </div>`;
+      document.getElementById('vc-actions').innerHTML = `
+        <button class="btn btn-primary btn-sm" onclick="vcUseSuggestion('${esc(suggestion).replace(/'/g,"\\'")}')">
+          ✅ Vorschlag &ldquo;${esc(suggestion)}&rdquo; übernehmen
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="saveWord(true)">
+          💾 Trotzdem speichern
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="vcEdit()">
+          ✏️ Selbst korrigieren
+        </button>`;
+      document.getElementById('vocab-save-btn').style.display = 'none';
+    }
+  } catch(e) {
+    // Unerwarteter Fehler → speichern erlauben
+    vcState = 'ok';
+    wrap.style.display = 'none';
+    document.getElementById('vocab-save-btn').disabled = false;
+  }
+}
+
+function vcUseSuggestion(suggestion) {
+  document.getElementById('ew-it').value = suggestion;
+  document.getElementById('vocab-save-btn').style.display = '';
+  vcState = 'ok';
+  saveWord(true);
+}
+
+function vcEdit() {
+  document.getElementById('vocab-save-btn').style.display = '';
+  document.getElementById('vocab-save-btn').disabled = false;
+  resetVocabCheck();
+  document.getElementById('ew-it').focus();
+}
+
+// ── Ähnlichkeits-Prüfung ────────────────────────────────────
+function normWord(s) {
+  return s.toLowerCase().trim()
+    .replace(/^(der |die |das |ein |eine |il |la |lo |le |gli |un |una |l'|to )/i, '')
+    .replace(/[.,!?;:()]/g, '').trim();
+}
+
+function isSimilar(a, b) {
+  const na = normWord(a), nb = normWord(b);
+  if (na === nb) return true;
+  if (na.includes(nb) || nb.includes(na)) return true;
+  // Levenshtein-Distanz bis 25% der Länge tolerieren
+  const maxDist = Math.floor(Math.max(na.length, nb.length) * 0.28);
+  return levenshtein(na, nb) <= Math.max(2, maxDist);
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0));
+  for (let i=1;i<=m;i++)
+    for (let j=1;j<=n;j++)
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+  return dp[m][n];
 }
 
 async function deleteWord(id) {
@@ -1284,6 +1499,62 @@ async function deleteWord(id) {
   renderVocabTable();
   document.getElementById('vocab-count').textContent = vocabulary.length;
   toast('Vokabel gelöscht.', 'info');
+}
+
+// ── Duplikate entfernen ──────────────────────────────────────
+async function removeDuplicates() {
+  // Normiere: Kleinbuchstaben, Artikel entfernen, Leerzeichen trimmen
+  function norm(s) {
+    return (s || '').toLowerCase()
+      .replace(/^(der|die|das|ein|eine|il|la|lo|gli|le|l'|un|una|i)\s+/i,'')
+      .replace(/[^a-zäöüàèéìòùâêîôûç\s]/gi,'')
+      .trim();
+  }
+
+  // Gruppen nach normiertem Deutsch-Wort bilden
+  const groups = {};
+  vocabulary.forEach(w => {
+    const key = norm(w.deutsch);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(w);
+  });
+
+  const toDelete = [];
+  Object.values(groups).forEach(grp => {
+    if (grp.length < 2) return;
+    // Behalten: bestes Wort (meiste Richtig+Falsch-Antworten → am meisten geübt)
+    grp.sort((a, b) =>
+      ((b.correct_count||0)+(b.wrong_count||0)) - ((a.correct_count||0)+(a.wrong_count||0))
+    );
+    // Ab Index 1 → löschen
+    toDelete.push(...grp.slice(1));
+  });
+
+  if (toDelete.length === 0) {
+    toast('Keine Duplikate gefunden! ✅', 'success');
+    return;
+  }
+
+  const preview = toDelete.slice(0, 5).map(w => `"${w.deutsch}"`).join(', ');
+  const more    = toDelete.length > 5 ? ` … und ${toDelete.length - 5} weitere` : '';
+  if (!confirm(
+    `${toDelete.length} Duplikat${toDelete.length>1?'e':''} gefunden:\n${preview}${more}\n\nJetzt löschen? (Das Wort mit den meisten Übungen bleibt erhalten.)`
+  )) return;
+
+  // Batch-Delete in Gruppen von 50
+  const ids = toDelete.map(w => w.id);
+  const BATCH = 50;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const chunk = ids.slice(i, i + BATCH);
+    const { error } = await sb.from('vocabulary').delete().in('id', chunk);
+    if (error) { toast('Fehler beim Löschen: ' + error.message, 'error'); return; }
+  }
+
+  vocabulary = vocabulary.filter(w => !ids.includes(w.id));
+  computeCategories();
+  renderVocabTable();
+  document.getElementById('vocab-count').textContent = vocabulary.length;
+  toast(`${toDelete.length} Duplikat${toDelete.length>1?'e':''} entfernt ✅`, 'success');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2280,6 +2551,7 @@ function showHWList() {
   document.getElementById('hw-list-section').style.display   = '';
   document.getElementById('hw-upload-section').style.display = 'none';
   document.getElementById('hw-editor-section').style.display = 'none';
+  document.getElementById('hw-fill-section').style.display   = 'none';
   currentHWId = null;
   renderHomeworkList();
 }
@@ -2290,6 +2562,7 @@ function showHWNew() {
   document.getElementById('hw-list-section').style.display   = 'none';
   document.getElementById('hw-upload-section').style.display = '';
   document.getElementById('hw-editor-section').style.display = 'none';
+  document.getElementById('hw-fill-section').style.display   = 'none';
   document.getElementById('hw-title-direct').value           = '';
   document.getElementById('hw-content-direct').value         = '';
   document.getElementById('hw-upload-status').textContent    = '';
@@ -2411,6 +2684,179 @@ function compressImage(file, maxPx, quality) {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// ── Hausaufgaben: Aufgaben-Foto + Lückenfüller ───────────────
+function startHWOCR() {
+  document.getElementById('hw-ocr-input').click();
+}
+
+async function doHWOCR(file) {
+  if (!file) return;
+  currentHWId = null;
+  hwPhotos    = [file]; // Originalbild für Speicherung merken
+
+  // Zeige Fill-Section
+  document.getElementById('hw-list-section').style.display   = 'none';
+  document.getElementById('hw-upload-section').style.display = 'none';
+  document.getElementById('hw-editor-section').style.display = 'none';
+  document.getElementById('hw-fill-section').style.display   = '';
+  document.getElementById('hw-fill-form').style.display      = 'none';
+  document.getElementById('hw-fill-ocr-progress').style.display = '';
+
+  // Foto-Vorschau
+  const previewUrl = URL.createObjectURL(file);
+  const photoEl    = document.getElementById('hw-fill-photo');
+  photoEl.src      = previewUrl;
+  photoEl.style.display = '';
+
+  setHWFillStatus('⏳ Text wird erkannt…', 10);
+
+  try {
+    if (!window.Tesseract) {
+      setHWFillStatus('⬇️ OCR-Engine laden (einmalig ~10 MB)…', 15);
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    }
+    setHWFillStatus('🔍 Aufgaben werden erkannt…', 30);
+
+    const { data } = await Tesseract.recognize(file, 'deu+ita', {
+      logger: m => {
+        if (m.status === 'recognizing text')
+          setHWFillStatus(`🔍 ${Math.round(m.progress*100)}% erkannt…`, 30 + m.progress*60);
+      }
+    });
+
+    const text = (data.text || '').trim();
+    if (!text) {
+      setHWFillStatus('❌ Kein Text erkannt — schärferes Foto versuchen.', 0);
+      return;
+    }
+
+    setHWFillStatus(`✅ Erkannt (${Math.round(data.confidence||0)}% Genauigkeit)`, 100);
+    document.getElementById('hw-fill-ocr-progress').style.display = 'none';
+
+    // Titel aus erstem Satz
+    const firstLine = text.split('\n').find(l => l.trim().length > 3) || 'Hausaufgaben';
+    document.getElementById('hw-fill-title').value = firstLine.slice(0, 60).trim();
+
+    // Interaktives Formular aufbauen
+    buildFillForm(text);
+
+    const blanks = document.querySelectorAll('.hw-blank').length;
+    document.getElementById('hw-fill-subtitle').textContent =
+      blanks > 0 ? `${blanks} Lücke${blanks!==1?'n':''} erkannt` : 'Text erkannt — Lücken manuell hinzufügen';
+    document.getElementById('hw-fill-form').style.display = '';
+
+  } catch(e) {
+    setHWFillStatus('❌ Fehler: ' + e.message, 0);
+  }
+}
+
+function setHWFillStatus(msg, pct) {
+  document.getElementById('hw-fill-ocr-status').textContent  = msg;
+  document.getElementById('hw-fill-progress-bar').style.width = Math.min(100,pct) + '%';
+}
+
+function buildFillForm(text) {
+  const lines  = text.split('\n');
+  let   html   = '';
+  let   qNum   = 0;
+
+  lines.forEach(raw => {
+    const line = raw.trimEnd();
+    if (!line.trim()) { html += '<div style="height:10px"></div>'; return; }
+
+    const hasBlank  = /_{2,}|\.{4,}/.test(line);
+    const isNumItem = /^(\d{1,2}[\.\)\s]|[a-zA-Z][\.\)]\s)/.test(line.trim());
+
+    if (hasBlank) {
+      qNum++;
+      // Lücken durch Eingabefelder ersetzen
+      const inner = esc(line)
+        .replace(/_{3,}/g,  `<input class="hw-blank" placeholder="…" data-q="${qNum}" onkeydown="if(event.key==='Enter'){event.preventDefault();focusNextBlank(this)}">`)
+        .replace(/\.{4,}/g, `<input class="hw-blank" placeholder="…" data-q="${qNum}" onkeydown="if(event.key==='Enter'){event.preventDefault();focusNextBlank(this)}">`);
+      html += `<div class="hw-fill-line is-question"><span class="hw-fill-num">${qNum}.</span><span style="flex:1">${inner}</span></div>`;
+
+    } else if (isNumItem && line.trim().length < 120) {
+      // Nummerierter Punkt ohne Lücke → Lücke anhängen
+      qNum++;
+      html += `<div class="hw-fill-line is-question">
+        <span class="hw-fill-num">${qNum}.</span>
+        <span style="flex:1">${esc(line)}&nbsp;
+          <input class="hw-blank" placeholder="Antwort…" data-q="${qNum}"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();focusNextBlank(this)}">
+        </span>
+      </div>`;
+
+    } else {
+      html += `<div class="hw-fill-line is-text">${esc(line)}</div>`;
+    }
+  });
+
+  document.getElementById('hw-fill-lines').innerHTML = html;
+}
+
+function focusNextBlank(el) {
+  const blanks = Array.from(document.querySelectorAll('.hw-blank'));
+  const idx    = blanks.indexOf(el);
+  if (idx >= 0 && idx < blanks.length - 1) blanks[idx+1].focus();
+}
+
+function hwGetFilledText() {
+  // Baut den finalen Text mit ausgefüllten Antworten
+  const lines = document.querySelectorAll('#hw-fill-lines .hw-fill-line');
+  return Array.from(lines).map(line => {
+    const clone = line.cloneNode(true);
+    clone.querySelectorAll('.hw-blank').forEach(inp => {
+      const val  = inp.value.trim();
+      const span = document.createTextNode(val ? '[' + val + ']' : '___');
+      inp.replaceWith(span);
+    });
+    return clone.textContent.replace(/^\d+\.\s*/, match => match); // Nummerierung beibehalten
+  }).join('\n');
+}
+
+function hwFillToEditor() {
+  const title   = document.getElementById('hw-fill-title').value.trim() || 'Hausaufgaben';
+  const content = hwGetFilledText();
+  currentHWId   = null;
+  document.getElementById('hw-title-input').value    = title;
+  document.getElementById('hw-content-editor').value = content;
+  document.getElementById('hw-doc-name').textContent  = title;
+  document.getElementById('hw-fill-section').style.display   = 'none';
+  document.getElementById('hw-editor-section').style.display = '';
+  // Originalbild als Foto beibehalten (bereits in hwPhotos[0])
+  compressImage(hwPhotos[0], 1200, 0.78).then(b64 => {
+    hwPhotos = [b64];
+    renderHWPhotoGrid();
+  }).catch(() => { hwPhotos = []; renderHWPhotoGrid(); });
+}
+
+async function hwFillSave() {
+  const title   = document.getElementById('hw-fill-title').value.trim() || 'Hausaufgaben';
+  const content = hwGetFilledText();
+  const now     = new Date().toISOString();
+
+  // Foto komprimieren
+  let photos = '[]';
+  if (hwPhotos.length && hwPhotos[0] instanceof File) {
+    try {
+      const b64 = await compressImage(hwPhotos[0], 1200, 0.78);
+      photos    = JSON.stringify([b64]);
+    } catch(e) {}
+  }
+
+  try {
+    const newId = crypto.randomUUID ? crypto.randomUUID() : uuid();
+    const { error } = await sb.from('homework')
+      .insert({ id: newId, title, content, photos, created_at: now, updated_at: now });
+    if (error) throw error;
+    allHomework.unshift({ id: newId, title, content, photos, created_at: now, updated_at: now });
+    toast('Hausaufgaben gespeichert! ✅', 'success');
+    showHWList();
+  } catch(e) {
+    toast('Fehler beim Speichern: ' + e.message, 'error');
+  }
 }
 
 function handleHWDrop(e) {
