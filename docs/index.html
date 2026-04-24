@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Vokabeltrainer">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231565c0'/><text y='.9em' font-size='80'>📚</text></svg>">
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
@@ -411,6 +412,32 @@ tr:hover td{background:var(--blue-50)}
 .tr-online-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--blue-100);color:var(--blue-700);vertical-align:middle;margin-left:6px}
 .tr-result-text.loading::after{content:'';display:inline-block;width:20px;height:20px;border:3px solid var(--blue-200);border-top-color:var(--blue-500);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:10px}
 
+/* ── TTS / Aussprache ── */
+.btn-speak{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:none;background:var(--blue-100);color:var(--blue-700);font-size:14px;cursor:pointer;transition:all .15s;flex-shrink:0;line-height:1;vertical-align:middle}
+.btn-speak:hover{background:var(--blue-600);color:#fff;transform:scale(1.1)}
+.btn-speak.speaking{background:var(--blue-600);color:#fff;animation:speakPulse .7s ease-in-out infinite}
+@keyframes speakPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.fc-speak-btn{position:absolute;bottom:50px;right:20px;font-size:22px;width:44px;height:44px;border-radius:50%;border:none;background:var(--blue-100);color:var(--blue-700);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.fc-speak-btn:hover{background:var(--blue-600);color:#fff}
+
+/* ── Schwächste Wörter ── */
+.weak-word-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:var(--radius-sm);background:var(--red-bg);margin-bottom:6px;border-left:3px solid var(--red)}
+.weak-word-bar-wrap{flex:1;background:var(--gray-200);border-radius:99px;height:5px;overflow:hidden}
+.weak-word-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--red),#f87171)}
+
+/* ── Spaced Repetition ── */
+.sr-due-strip{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--orange-bg),#fff7ed);border:1.5px solid var(--orange);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px}
+.sr-due-strip .sr-left strong{display:block;font-size:15px;font-weight:700;color:var(--orange)}
+.sr-due-strip .sr-left span{font-size:13px;color:var(--gray-600)}
+.sr-mode-label{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--gray-600);cursor:pointer;padding:6px 0}
+.sr-mode-label input{width:18px;height:18px;accent-color:var(--blue-600);cursor:pointer}
+
+/* ── Kategorie-Farben ── */
+.badge-cat{color:#fff!important;border:none!important}
+
+/* ── Offline Toast ── */
+.toast.offline{background:#374151;color:#f9fafb;border:1px solid #6b7280}
+
 </style>
 </head>
 <body>
@@ -503,11 +530,19 @@ tr:hover td{background:var(--blue-50)}
           <button class="btn btn-secondary" onclick="showView('test')">Test starten →</button>
         </div>
       </div>
+      <!-- Spaced Repetition fällige Karten -->
+      <div id="sr-due-strip" class="sr-due-strip" style="display:none">
+        <div class="sr-left">
+          <strong>🧠 <span id="sr-due-count">0</span> Karten heute fällig!</strong>
+          <span>Spaced Repetition — jetzt wiederholen</span>
+        </div>
+        <button class="btn btn-secondary" onclick="startLearnSR()">Jetzt lernen →</button>
+      </div>
       <div class="grid-4">
         <div class="card stat-card"><div class="stat-top"><div><div class="card-title">Gesamt</div><div class="stat-num" id="stat-total">–</div></div><div class="stat-icon icon-blue">📚</div></div><div class="stat-lbl">Vokabeln gesamt</div></div>
         <div class="card stat-card"><div class="stat-top"><div><div class="card-title">Gelernt</div><div class="stat-num" style="color:var(--green)" id="stat-mastered">–</div></div><div class="stat-icon icon-green">✅</div></div><div class="stat-lbl">Beherrscht (≥3 richtig)</div></div>
         <div class="card stat-card"><div class="stat-top"><div><div class="card-title">In Übung</div><div class="stat-num" style="color:var(--orange)" id="stat-learning">–</div></div><div class="stat-icon icon-orange">🔄</div></div><div class="stat-lbl">Noch nicht sicher</div></div>
-        <div class="card stat-card"><div class="stat-top"><div><div class="card-title">Letzte Note</div><div class="stat-num" id="stat-grade">–</div></div><div class="stat-icon icon-purple">🏆</div></div><div class="stat-lbl" id="stat-grade-lbl">Noch kein Test</div></div>
+        <div class="card stat-card" style="cursor:pointer" onclick="showView('results');setTimeout(()=>document.getElementById('weak-words-card').scrollIntoView({behavior:'smooth'}),150)"><div class="stat-top"><div><div class="card-title">Schwächste</div><div class="stat-num" style="color:var(--red)" id="stat-weak">–</div></div><div class="stat-icon" style="background:var(--red-bg)">⚠️</div></div><div class="stat-lbl">Wörter mit Fehlern</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -540,6 +575,7 @@ tr:hover td{background:var(--blue-50)}
           <option value="">Alle Kategorien</option>
         </select>
         <button class="btn btn-primary" onclick="openAddModal()">+ Vokabel hinzufügen</button>
+        <button class="btn btn-secondary" onclick="printVocabList()" title="Vokabeln als Lernblatt drucken">🖨️ Lernblatt</button>
         <button class="btn btn-secondary" onclick="removeDuplicates()" title="Doppelte Vokabeln erkennen und entfernen">🧹 Duplikate</button>
       </div>
       <div class="table-wrap">
@@ -572,6 +608,10 @@ tr:hover td{background:var(--blue-50)}
             <div class="form-group"><label>Anzahl Karten</label>
               <input class="form-control" type="number" id="learn-count" value="20" min="5" max="100">
             </div>
+            <label class="sr-mode-label">
+              <input type="checkbox" id="learn-sr">
+              🧠 Spaced Repetition — nur heute fällige Karten
+            </label>
             <button class="btn btn-primary btn-lg" style="width:100%;margin-top:8px" onclick="startLearnSession()">Lernen starten</button>
           </div>
         </div>
@@ -593,6 +633,7 @@ tr:hover td{background:var(--blue-50)}
                 <div class="card-lang" id="fc-back-lang">ITALIANO</div>
                 <div class="card-word" id="fc-back-word">–</div>
                 <div class="card-hint" id="fc-back-cat"></div>
+                <button class="fc-speak-btn" id="fc-speak-btn" onclick="event.stopPropagation();fcSpeak()" title="Aussprache">🔊</button>
                 <div style="position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;padding:0 20px;font-size:13px;opacity:.55">
                   <span>← wischen = Falsch</span><span>Richtig = wischen →</span>
                 </div>
@@ -701,6 +742,13 @@ tr:hover td{background:var(--blue-50)}
           <button class="btn btn-primary" onclick="showView('test')">Test starten</button>
         </div>
       </div>
+      <div class="card" id="weak-words-card" style="margin-top:20px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="section-title">⚠️ Schwächste Vokabeln</div>
+          <button class="btn btn-danger btn-sm" onclick="startLearnWeak()">🎯 Gezielt üben</button>
+        </div>
+        <div id="weak-words-list"></div>
+      </div>
     </div>
 
     <!-- IMPORT -->
@@ -785,7 +833,10 @@ tr:hover td{background:var(--blue-50)}
             <button class="btn btn-secondary" onclick="document.getElementById('tr-input').value='';clearTrResult();closeOCR()">✕ Löschen</button>
           </div>
           <div id="tr-result" style="display:none" class="translator-result">
-            <div class="tr-result-text" id="tr-result-text"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <div class="tr-result-text" id="tr-result-text" style="flex:1"></div>
+              <button class="btn-speak" id="tr-speak-btn" onclick="trSpeak()" title="Aussprache" style="width:36px;height:36px;font-size:18px;flex-shrink:0;margin-top:4px">🔊</button>
+            </div>
             <div class="tr-result-source" id="tr-result-source"></div>
             <div id="tr-add-vocab" style="margin-top:12px;display:none">
               <button class="btn btn-success btn-sm" onclick="addTranslationToVocab()">+ Zu Vokabeln hinzufügen</button>
@@ -1135,15 +1186,27 @@ async function init() {
 
 async function loadVocabulary() {
   let all = [], page = 0, pageSize = 1000;
-  while(true) {
-    const { data, error } = await sb.from('vocabulary').select('*').order('added_date')
-      .range(page * pageSize, (page + 1) * pageSize - 1);
-    if (error) throw error;
-    all = all.concat(data || []);
-    if (!data || data.length < pageSize) break;
-    page++;
+  try {
+    while(true) {
+      const { data, error } = await sb.from('vocabulary').select('*').order('added_date')
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < pageSize) break;
+      page++;
+    }
+    vocabulary = all;
+    cacheVocabLocally(); // Offline-Cache aktualisieren
+  } catch(e) {
+    // Offline-Fallback
+    const cached = loadVocabFromCache();
+    if (cached && cached.length > 0) {
+      vocabulary = cached;
+      toast('📴 Offline – gecachte Vokabeln werden angezeigt.', 'info');
+    } else {
+      throw e; // kein Cache → Fehler weitergeben
+    }
   }
-  vocabulary = all;
 }
 
 async function loadSettings() {
@@ -1186,6 +1249,7 @@ function updateUI() {
   document.getElementById('stat-total').textContent    = total;
   document.getElementById('stat-mastered').textContent = mastered;
   document.getElementById('stat-learning').textContent = learning;
+  document.getElementById('stat-weak').textContent     = vocabulary.filter(w=>(w.wrong_count||0)>0).length;
 
   const lastTest = allTests.length > 0 ? allTests[allTests.length - 1] : null;
   if (lastTest) {
@@ -1215,6 +1279,7 @@ function updateUI() {
   renderVocabTable();
   renderDashChart();
   renderResultsView();
+  updateSRDash();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1258,11 +1323,17 @@ function renderCategoryOptions() {
 function renderCategoryGrids() {
   const g = document.getElementById('test-cat-grid');
   if (!g) return;
-  g.innerHTML = allCategories.map(c => `
-    <div class="cat-card ${selectedTestCat === c.name ? 'selected' : ''}" onclick="selectTestCat('${esc(c.name)}')">
-      <div class="cat-name">${esc(c.name)}</div>
+  g.innerHTML = allCategories.map(c => {
+    const col = getCatColor(c.name);
+    return `
+    <div class="cat-card ${selectedTestCat === c.name ? 'selected' : ''}" onclick="selectTestCat('${esc(c.name)}')" style="${selectedTestCat===c.name?`border-color:${col};background:${col}18`:''}">
+      <div class="cat-name" style="display:flex;align-items:center;gap:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block"></span>
+        ${esc(c.name)}
+      </div>
       <div class="cat-count">${c.count} Vokabeln</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function selectTestCat(cat) {
@@ -1294,8 +1365,8 @@ function renderVocabTable() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${esc(w.deutsch)}</strong></td>
-      <td>${esc(w.italienisch)}</td>
-      <td>${w.category ? `<span class="badge badge-blue">${esc(w.category)}</span>` : '<span style="color:var(--gray-400)">–</span>'}</td>
+      <td style="display:flex;align-items:center;gap:6px">${esc(w.italienisch)}<button class="btn-speak" onclick="speakWord('${esc(w.italienisch)}','it-IT')" title="Aussprache">🔊</button></td>
+      <td>${getCatBadgeHtml(w.category)}</td>
       <td style="color:var(--green);font-weight:700">${w.correct_count || 0}</td>
       <td style="color:var(--red);font-weight:700">${w.wrong_count || 0}</td>
       <td>${'🔥'.repeat(Math.min(streak,5))}${streak > 5 ? ' '+streak : streak===0 ? '–' : ''}</td>
@@ -1568,7 +1639,16 @@ function startLearnSession() {
   const cat   = document.getElementById('learn-cat').value;
   const count = parseInt(document.getElementById('learn-count').value) || 20;
 
+  const srMode = document.getElementById('learn-sr')?.checked;
   let pool = vocabulary.filter(w => !cat || w.category === cat);
+  if (srMode) {
+    const due = pool.filter(isDue);
+    if (due.length === 0) {
+      toast('🎉 Alle Karten sind aktuell — keine fälligen Karten!', 'success'); return;
+    }
+    toast(`🧠 Spaced Repetition: ${due.length} fällige Karten`, 'info');
+    pool = due;
+  }
   if (pool.length === 0) { toast('Keine Vokabeln gefunden.', 'error'); return; }
 
   pool.sort((a,b) => {
@@ -1577,7 +1657,7 @@ function startLearnSession() {
     return pa - pb;
   });
 
-  learnCards   = shuffle(pool.slice(0, count));
+  learnCards   = shuffle(pool.slice(0, srMode ? pool.length : count));
   learnIdx     = 0;
   learnCorrect = 0;
   learnWrong   = 0;
@@ -1605,6 +1685,9 @@ function showCard() {
   document.getElementById('fc-back-lang').textContent  = dir === 'de_it' ? '🇮🇹 ITALIANO' : '🇩🇪 DEUTSCH';
   document.getElementById('fc-back-word').textContent  = dir === 'de_it' ? w.italienisch : w.deutsch;
   document.getElementById('fc-back-cat').textContent   = w.category || '';
+  // Für TTS merken
+  _fcBackText = dir === 'de_it' ? w.italienisch : w.deutsch;
+  _fcBackLang = dir === 'de_it' ? 'it-IT' : 'de-DE';
 
   const pct = Math.round(learnIdx / learnCards.length * 100);
   document.getElementById('fc-progress').style.width = pct + '%';
@@ -1999,6 +2082,7 @@ function renderResultsView() {
       <span class="badge ${t.direction==='de_it'?'badge-blue':'badge-orange'}">${t.direction==='de_it'?'DE→IT':'IT→DE'}</span>
     </div>`).join('');
   renderResultsCharts();
+  renderWeakWordsCard();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3052,6 +3136,228 @@ function checkLogin() {
     init();
   }
   // else: login screen stays visible
+}
+
+// ══════════════════════════════════════════════════════════════
+// TTS — AUSSPRACHE (Web Speech API)
+// ══════════════════════════════════════════════════════════════
+let _ttsLang = 'it-IT'; // für fcSpeak / trSpeak
+
+function speakWord(text, lang) {
+  if (!window.speechSynthesis) { toast('Aussprache wird von diesem Browser nicht unterstützt.', 'error'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang  = lang || 'it-IT';
+  u.rate  = 0.85;
+  u.pitch = 1;
+  // Passende Stimme suchen
+  const voices = window.speechSynthesis.getVoices();
+  const pref   = lang && lang.startsWith('de') ? 'de' : 'it';
+  const match  = voices.find(v => v.lang.startsWith(pref));
+  if (match) u.voice = match;
+  window.speechSynthesis.speak(u);
+}
+
+// Flashcard: spricht das aktuell angezeigte Rückseiten-Wort
+let _fcBackText = '', _fcBackLang = 'it-IT';
+function fcSpeak() { speakWord(_fcBackText, _fcBackLang); }
+
+// Übersetzer: spricht das Ergebnis
+function trSpeak() {
+  if (!trLastResult) return;
+  const text = trLastResult.translation;
+  const lang = trLastResult.direction === 'de_it' ? 'it-IT' : 'de-DE';
+  speakWord(text, lang);
+}
+
+// Wartet auf Stimmen-Initialisierung (asynchron in Chrome)
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+// ══════════════════════════════════════════════════════════════
+// KATEGORIE-FARBEN
+// ══════════════════════════════════════════════════════════════
+const CAT_PALETTE = [
+  '#1565c0','#16a34a','#ea580c','#7c3aed','#0891b2',
+  '#be123c','#0369a1','#15803d','#d97706','#6d28d9',
+  '#0e7490','#b45309','#047857','#9d174d','#1d4ed8',
+];
+
+function getCatColor(name) {
+  if (!name) return '#94a3b8';
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0x7fffffff;
+  return CAT_PALETTE[h % CAT_PALETTE.length];
+}
+
+function getCatBadgeHtml(cat) {
+  if (!cat) return '<span style="color:var(--gray-400)">–</span>';
+  const col = getCatColor(cat);
+  return `<span class="badge badge-cat" style="background:${col}">${esc(cat)}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPACED REPETITION — Leitner-Intervalle
+// ══════════════════════════════════════════════════════════════
+// Intervalle in Tagen für Streak 0–5+
+const SR_INTERVALS = [0, 1, 3, 7, 14, 30];
+
+function isDue(word) {
+  if (!word.last_practiced) return true; // noch nie geübt → immer fällig
+  const streak   = Math.min(word.streak || 0, SR_INTERVALS.length - 1);
+  const interval = SR_INTERVALS[streak];
+  if (interval === 0) return true;
+  const daysSince = (Date.now() - new Date(word.last_practiced).getTime()) / 86400000;
+  return daysSince >= interval;
+}
+
+function getDueCount() {
+  return vocabulary.filter(isDue).length;
+}
+
+function updateSRDash() {
+  const due = getDueCount();
+  const strip = document.getElementById('sr-due-strip');
+  if (strip) {
+    strip.style.display = due > 0 ? '' : 'none';
+    const el = document.getElementById('sr-due-count');
+    if (el) el.textContent = due;
+  }
+}
+
+// SR-Modus: starte Lernsession nur mit fälligen Karten
+function startLearnSR() {
+  document.getElementById('learn-sr').checked = true;
+  showView('learn');
+  startLearnSession();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCHWÄCHSTE WÖRTER
+// ══════════════════════════════════════════════════════════════
+function getWeakWords(n) {
+  return vocabulary
+    .filter(w => (w.wrong_count || 0) > 0)
+    .map(w => {
+      const total = (w.correct_count || 0) + (w.wrong_count || 0);
+      const rate  = total ? (w.wrong_count || 0) / total : 0;
+      return { ...w, errorRate: rate, total };
+    })
+    .sort((a, b) => b.errorRate - a.errorRate || b.wrong_count - a.wrong_count)
+    .slice(0, n || 10);
+}
+
+function renderWeakWordsCard() {
+  const card = document.getElementById('weak-words-card');
+  const list = document.getElementById('weak-words-list');
+  if (!card || !list) return;
+  const weak = getWeakWords(10);
+  if (weak.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  list.innerHTML = weak.map(w => `
+    <div class="weak-word-item">
+      <div style="min-width:120px">
+        <div style="font-size:15px;font-weight:700;color:var(--blue-800)">${esc(w.deutsch)}</div>
+        <div style="font-size:13px;color:var(--gray-600)">${esc(w.italienisch)}</div>
+      </div>
+      <div class="weak-word-bar-wrap">
+        <div class="weak-word-bar-fill" style="width:${Math.round(w.errorRate*100)}%"></div>
+      </div>
+      <div style="min-width:56px;text-align:right;font-size:13px;color:var(--red);font-weight:700">
+        ${Math.round(w.errorRate*100)}% ❌
+      </div>
+      <button class="btn-speak" onclick="speakWord('${esc(w.italienisch)}','it-IT')" title="Aussprache">🔊</button>
+    </div>`).join('');
+  // Stat-Karte im Dashboard aktualisieren
+  const sw = document.getElementById('stat-weak');
+  if (sw) sw.textContent = weak.length;
+}
+
+function startLearnWeak() {
+  const weak = getWeakWords(20);
+  if (weak.length === 0) { toast('Keine Fehler-Wörter vorhanden.', 'info'); return; }
+  // Überschreibe learnCards direkt + starte Session
+  const dir = document.getElementById('learn-dir')?.value || 'de_it';
+  learnCards   = shuffle(weak);
+  learnIdx     = 0;
+  learnCorrect = 0;
+  learnWrong   = 0;
+  learnDir     = dir;
+  showView('learn');
+  document.getElementById('learn-config').style.display  = 'none';
+  document.getElementById('learn-session').style.display = '';
+  document.getElementById('learn-done').style.display    = 'none';
+  showCard();
+  toast(`🎯 ${weak.length} schwächste Wörter — los geht's!`, 'info');
+}
+
+// ══════════════════════════════════════════════════════════════
+// LERNBLATT DRUCKEN
+// ══════════════════════════════════════════════════════════════
+function printVocabList() {
+  const q   = (document.getElementById('vocab-search').value || '').toLowerCase();
+  const cat = document.getElementById('vocab-filter').value;
+  const list = vocabulary.filter(w =>
+    (!q || w.deutsch.toLowerCase().includes(q) || w.italienisch.toLowerCase().includes(q)) &&
+    (!cat || w.category === cat)
+  );
+  if (list.length === 0) { toast('Keine Vokabeln für den Ausdruck.', 'error'); return; }
+
+  const title = cat ? `Vokabeln: ${cat}` : 'Vokabeln – Lernblatt';
+  const rows  = list.map((w, i) => `
+    <tr>
+      <td style="padding:8px 10px;border:1px solid #ddd;font-weight:600">${i+1}. ${w.deutsch}</td>
+      <td style="padding:8px 10px;border:1px solid #ddd;color:#1565c0;font-weight:600">${w.italienisch}</td>
+      <td style="padding:8px 10px;border:1px solid #ddd;color:#64748b;font-size:12pt">${w.category||''}</td>
+    </tr>`).join('');
+
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>${title}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:13pt;margin:2cm;color:#111}
+  h1{font-size:20pt;text-align:center;color:#1565c0;border-bottom:2px solid #1565c0;padding-bottom:.4cm;margin-bottom:.6cm}
+  .meta{text-align:center;font-size:11pt;color:#666;margin-bottom:.8cm}
+  table{width:100%;border-collapse:collapse}
+  th{background:#e3f2fd;padding:8px 10px;border:1px solid #ddd;text-align:left;font-size:12pt;color:#1565c0}
+  tr:nth-child(even) td{background:#f8fafc}
+  @media print{@page{margin:1.5cm}}
+</style></head>
+<body>
+<h1>📚 ${title}</h1>
+<div class="meta">${list.length} Vokabeln · ${new Date().toLocaleDateString('de-AT')}</div>
+<table>
+  <thead><tr><th>🇩🇪 Deutsch</th><th>🇮🇹 Italiano</th><th>Kategorie</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<script>window.onload=()=>{window.print();}<\/script>
+</body></html>`);
+  w.document.close();
+}
+
+// ══════════════════════════════════════════════════════════════
+// OFFLINE — Vocab-Cache in localStorage
+// ══════════════════════════════════════════════════════════════
+const VOCAB_CACHE_KEY = 'vt_vocab_cache';
+
+function cacheVocabLocally() {
+  try { localStorage.setItem(VOCAB_CACHE_KEY, JSON.stringify(vocabulary)); } catch(e) {}
+}
+
+function loadVocabFromCache() {
+  try {
+    const raw = localStorage.getItem(VOCAB_CACHE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+// Service Worker registrieren
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
 }
 
 // ══════════════════════════════════════════════════════════════
