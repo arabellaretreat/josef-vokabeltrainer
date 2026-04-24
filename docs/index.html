@@ -406,7 +406,10 @@ tr:hover td{background:var(--blue-50)}
 .ocr-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue-400),var(--blue-600));border-radius:99px;transition:width .3s;width:0%}
 .ocr-status-txt{font-size:14px;color:var(--blue-600);font-weight:600;min-height:20px}
 .ocr-preview-img{max-width:100%;max-height:200px;display:block;margin:10px auto;border-radius:var(--radius-sm);box-shadow:var(--shadow)}
-.ocr-extracted{background:#fff;border:1px solid var(--blue-200);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;color:var(--gray-800);line-height:1.7;max-height:100px;overflow-y:auto;white-space:pre-wrap;margin-top:8px}
+.ocr-extracted{background:#fff;border:1px solid var(--blue-200);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;color:var(--gray-800);line-height:2;max-height:160px;overflow-y:auto;margin-top:8px}
+.ocr-line{margin-bottom:2px;flex-wrap:wrap;display:flex;gap:3px;align-items:baseline}
+.ocr-word-chip{display:inline-block;cursor:pointer;padding:1px 5px;border-radius:4px;transition:all .12s;border:1px solid transparent;line-height:1.6}
+.ocr-word-chip:hover{background:var(--blue-100);border-color:var(--blue-300);color:var(--blue-800);transform:scale(1.05)}
 
 /* ── Online-Übersetzung Ergebnis ── */
 .tr-online-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--blue-100);color:var(--blue-700);vertical-align:middle;margin-left:6px}
@@ -818,6 +821,7 @@ tr:hover td{background:var(--blue-50)}
             <div class="ocr-header">
               <span>📷</span>
               <strong id="ocr-status-txt">Text wird erkannt…</strong>
+              <button class="btn btn-secondary btn-sm" onclick="startOCR()" title="Neues Foto">📷 Neu</button>
               <button class="btn btn-secondary btn-sm" onclick="closeOCR()">✕</button>
             </div>
             <div class="ocr-progress-wrap">
@@ -2312,31 +2316,37 @@ function closeOCR() {
 
 async function doOCR(file) {
   if (!file) return;
+  // Datei-Input immer zurücksetzen → gleiche Datei nochmal wählbar (iOS-Fix)
+  document.getElementById('ocr-file-input').value = '';
+
   const section = document.getElementById('ocr-section');
   section.style.display = '';
   setOcrStatus('📷 Bild wird geladen…', 0);
+  document.getElementById('ocr-extracted').style.display = 'none';
+  document.getElementById('ocr-extracted').innerHTML = '';
 
   // Bildvorschau
   const previewUrl = URL.createObjectURL(file);
   const previewEl  = document.getElementById('ocr-preview-img');
   previewEl.src    = previewUrl;
   previewEl.style.display = '';
-  document.getElementById('ocr-extracted').style.display = 'none';
 
   try {
-    // Tesseract.js lazy laden (erstes Mal ~2 MB + Sprachdaten ~8 MB, danach gecacht)
+    // Tesseract.js lazy laden — mit expliziten CDN-Pfaden für GitHub Pages
     if (!window.Tesseract) {
-      setOcrStatus('⬇️ OCR-Engine wird geladen (einmalig ~10 MB)…', 10);
+      setOcrStatus('⬇️ OCR-Engine laden (einmalig ~10 MB)…', 10);
       await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
     }
 
     setOcrStatus('🔍 Text wird erkannt…', 30);
 
     const { data } = await Tesseract.recognize(file, 'deu+ita', {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+      langPath:   'https://tessdata.projectnaptha.com/4.0.0',
+      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
       logger: m => {
-        if (m.status === 'recognizing text') {
+        if (m.status === 'recognizing text')
           setOcrStatus(`🔍 ${Math.round(m.progress * 100)}% erkannt…`, 30 + m.progress * 65);
-        }
       }
     });
 
@@ -2346,17 +2356,55 @@ async function doOCR(file) {
       return;
     }
 
-    setOcrStatus(`✅ Erkannt (${Math.round(data.confidence||0)}% Genauigkeit)`, 100);
-    document.getElementById('ocr-extracted').textContent = rawText;
-    document.getElementById('ocr-extracted').style.display = '';
+    setOcrStatus(`✅ ${Math.round(data.confidence||0)}% Genauigkeit — Wort antippen zum Übersetzen`, 100);
 
-    // Text in Eingabefeld füllen + auto-übersetzen
-    document.getElementById('tr-input').value = rawText;
-    setTimeout(runTranslate, 200);
+    // Wörter einzeln anklickbar machen
+    const words = rawText.split(/\s+/).filter(Boolean);
+    const lines = rawText.split('\n');
+
+    // Zeilenweise + Wort-Chips anzeigen
+    const lineHtml = lines.map(line => {
+      if (!line.trim()) return '<br>';
+      const chips = line.trim().split(/\s+/).map(w => {
+        const clean = w.replace(/[^\wäöüÄÖÜàèéìòùÀÈÉÌÒÙß]/g, '');
+        if (!clean) return esc(w);
+        return `<span class="ocr-word-chip" onclick="ocrWordClick('${esc(clean)}')" title="Klick → übersetzen">${esc(w)}</span>`;
+      }).join(' ');
+      return `<div class="ocr-line">${chips}</div>`;
+    }).join('');
+
+    const extracted = document.getElementById('ocr-extracted');
+    extracted.innerHTML = lineHtml;
+    extracted.style.display = '';
+
+    // Kurzer Text (<= 4 Wörter oder 1 Zeile): automatisch in Übersetzer
+    const wordCount = words.length;
+    const lineCount = lines.filter(l => l.trim()).length;
+    if (wordCount <= 4 || lineCount <= 1) {
+      document.getElementById('tr-input').value = rawText;
+      setTimeout(runTranslate, 200);
+    } else {
+      // Langer Text: nur ersten sinnvollen Satz vorschlagen
+      const firstLine = lines.find(l => l.trim().length > 2) || words.slice(0,4).join(' ');
+      document.getElementById('tr-input').value = firstLine.trim();
+      // Kein auto-translate — Nutzer wählt selbst per Klick oder bearbeitet
+      toast('📷 Text erkannt — Wort antippen zum Übersetzen!', 'info');
+    }
 
   } catch(e) {
-    setOcrStatus('❌ Fehler: ' + e.message, 0);
+    console.error('OCR Fehler:', e);
+    setOcrStatus('❌ Fehler: ' + (e.message || 'OCR fehlgeschlagen'), 0);
+    toast('OCR-Fehler: ' + (e.message||'Unbekannt'), 'error');
   }
+}
+
+function ocrWordClick(word) {
+  if (!word) return;
+  document.getElementById('tr-input').value = word;
+  setTrDir('auto');
+  runTranslate();
+  // Scroll zu Ergebnis
+  document.getElementById('tr-result').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function setOcrStatus(msg, pct) {
@@ -2777,6 +2825,8 @@ function startHWOCR() {
 
 async function doHWOCR(file) {
   if (!file) return;
+  // Input immer zurücksetzen (iOS-Fix: gleiche Datei nochmal wählbar)
+  document.getElementById('hw-ocr-input').value = '';
   currentHWId = null;
   hwPhotos    = [file]; // Originalbild für Speicherung merken
 
@@ -2804,6 +2854,9 @@ async function doHWOCR(file) {
     setHWFillStatus('🔍 Aufgaben werden erkannt…', 30);
 
     const { data } = await Tesseract.recognize(file, 'deu+ita', {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+      langPath:   'https://tessdata.projectnaptha.com/4.0.0',
+      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
       logger: m => {
         if (m.status === 'recognizing text')
           setHWFillStatus(`🔍 ${Math.round(m.progress*100)}% erkannt…`, 30 + m.progress*60);
