@@ -989,6 +989,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
               <button class="btn btn-success" onclick="saveHomework()">💾 Speichern</button>
               <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
+              <button class="btn btn-secondary" onclick="emailHWAsPDF()" style="background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc">📧 E-Mail</button>
             </div>
             <div class="form-group"><label>Titel</label>
               <input class="form-control" id="hw-title-input" placeholder="z.B. Hausaufgaben Italiano – Josef">
@@ -1005,6 +1006,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
               <button class="btn btn-success btn-lg" onclick="saveHomework()">💾 Speichern</button>
               <button class="btn btn-primary btn-lg" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
+              <button class="btn btn-lg" onclick="emailHWAsPDF()" style="background:#e0f2fe;color:#0369a1;border:1.5px solid #7dd3fc;font-weight:700">📧 Per E-Mail senden</button>
             </div>
           </div>
         </div>
@@ -1020,6 +1022,9 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
             <h3>👤 Schüler</h3>
             <div class="form-group"><label>Name</label>
               <input class="form-control" id="set-name" placeholder="Josef">
+            </div>
+            <div class="form-group"><label>📧 Lehrer E-Mail (für Hausaufgaben-Versand)</label>
+              <input class="form-control" id="set-teacher-email" type="email" placeholder="lehrer@schule.at">
             </div>
           </div>
           <div class="settings-section">
@@ -1222,6 +1227,8 @@ async function loadSettings() {
   if (nameEl) nameEl.value = name;
   document.getElementById('sb-name').textContent = name;
   document.getElementById('sb-avatar').textContent = name[0].toUpperCase();
+  const emailEl = document.getElementById('set-teacher-email');
+  if (emailEl) emailEl.value = settings.teacher_email || '';
 }
 
 async function loadTests() {
@@ -2441,9 +2448,14 @@ async function addTranslationToVocab() {
 // SETTINGS
 // ══════════════════════════════════════════════════════════════
 async function saveSettings() {
-  const name = document.getElementById('set-name').value.trim() || 'Josef';
-  await sb.from('settings').upsert({ key:'student_name', value:name });
-  settings.student_name = name;
+  const name  = document.getElementById('set-name').value.trim() || 'Josef';
+  const email = (document.getElementById('set-teacher-email')?.value || '').trim();
+  await Promise.all([
+    sb.from('settings').upsert({ key:'student_name',  value:name }),
+    email ? sb.from('settings').upsert({ key:'teacher_email', value:email }) : Promise.resolve()
+  ]);
+  settings.student_name  = name;
+  settings.teacher_email = email;
   document.getElementById('sb-name').textContent   = name;
   document.getElementById('sb-avatar').textContent = name[0].toUpperCase();
   toast('Einstellungen gespeichert.', 'success');
@@ -3041,6 +3053,97 @@ function openDirectEditor() {
   document.getElementById('hw-upload-section').style.display = 'none';
   document.getElementById('hw-editor-section').style.display = '';
   renderHWPhotoGrid();
+}
+
+async function emailHWAsPDF() {
+  const title   = (document.getElementById('hw-title-input').value || 'Hausaufgaben').trim();
+  const content = document.getElementById('hw-content-editor').value || '';
+  const teacher = (settings.teacher_email || '').trim();
+
+  // ── Schritt 1: html2pdf.js lazy laden (Unicode-sicher, ~1 MB) ──
+  if (!window.html2pdf) {
+    toast('⏳ PDF-Generator wird geladen…', 'info');
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+    } catch(e) {
+      toast('PDF-Generator konnte nicht geladen werden.', 'error'); return;
+    }
+  }
+
+  // ── Schritt 2: HTML-Vorlage bauen ──
+  const dateStr   = new Date().toLocaleDateString('de-AT', { day:'2-digit', month:'long', year:'numeric' });
+  const photoHtml = hwPhotos.length
+    ? hwPhotos.map(p => typeof p === 'string'
+        ? `<img src="${p}" style="max-width:100%;max-height:240px;margin:8px 0;border-radius:6px;display:block">`
+        : '').join('')
+    : '';
+
+  const htmlSrc = `
+    <div style="font-family:Arial,sans-serif;font-size:12pt;line-height:1.8;color:#111;padding:10px">
+      <h2 style="color:#1565c0;border-bottom:2px solid #1565c0;padding-bottom:6px;margin-bottom:4px">${title}</h2>
+      <div style="font-size:10pt;color:#64748b;margin-bottom:18px">${dateStr}</div>
+      ${photoHtml}
+      <pre style="font-family:Arial,sans-serif;font-size:12pt;line-height:1.8;white-space:pre-wrap;word-wrap:break-word;margin:0">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+    </div>`;
+
+  // Temp-Element für html2pdf
+  const el = document.createElement('div');
+  el.innerHTML = htmlSrc;
+  el.style.position = 'absolute';
+  el.style.left = '-9999px';
+  document.body.appendChild(el);
+
+  // ── Schritt 3: PDF als Blob generieren ──
+  let pdfBlob;
+  try {
+    pdfBlob = await html2pdf()
+      .set({
+        margin:       [12, 12, 12, 12],
+        filename:     title + '.pdf',
+        image:        { type: 'jpeg', quality: 0.88 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      })
+      .from(el)
+      .outputPdf('blob');
+  } catch(e) {
+    document.body.removeChild(el);
+    toast('PDF-Fehler: ' + e.message, 'error'); return;
+  }
+  document.body.removeChild(el);
+
+  const pdfFile = new File([pdfBlob], title + '.pdf', { type: 'application/pdf' });
+
+  // ── Schritt 4: Teilen / E-Mail ──
+  // A) iOS / Android: Web Share API → öffnet Share-Sheet → Mail wählen
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    try {
+      await navigator.share({
+        title:   title,
+        text:    `Hausaufgaben von Josef: ${title}`,
+        files:   [pdfFile]
+      });
+      return;
+    } catch(e) {
+      if (e.name !== 'AbortError') console.warn('Share fehlgeschlagen:', e);
+    }
+  }
+
+  // B) Desktop-Fallback: PDF herunterladen + mailto öffnen
+  const blobUrl = URL.createObjectURL(pdfBlob);
+  const a = document.createElement('a');
+  a.href     = blobUrl;
+  a.download = title + '.pdf';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+
+  // Mailto mit Betreff + Hinweis im Body
+  const subject = encodeURIComponent(`Hausaufgaben: ${title}`);
+  const body    = encodeURIComponent(`Hallo,\n\nim Anhang findest du die Hausaufgaben: ${title}\n\nDatum: ${dateStr}\n\nLiebe Grüße,\nJosef`);
+  const mailto  = `mailto:${teacher}?subject=${subject}&body=${body}`;
+  setTimeout(() => { window.open(mailto); }, 600);
+
+  toast('📥 PDF heruntergeladen → E-Mail-App öffnet sich!', 'success');
 }
 
 function printHWAsPDF() {
