@@ -441,6 +441,23 @@ tr:hover td{background:var(--blue-50)}
 /* ── Offline Toast ── */
 .toast.offline{background:#374151;color:#f9fafb;border:1px solid #6b7280}
 
+/* ── PDF per E-Mail Button ── */
+.btn-email-pdf{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 24px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,#0369a1,#0284c7);
+  color:#fff;font-size:16px;font-weight:700;
+  border:none;cursor:pointer;
+  box-shadow:0 4px 14px rgba(3,105,161,.35);
+  transition:all .18s;white-space:nowrap
+}
+.btn-email-pdf:hover{
+  background:linear-gradient(135deg,#075985,#0369a1);
+  box-shadow:0 6px 18px rgba(3,105,161,.5);
+  transform:translateY(-1px)
+}
+.btn-email-pdf:active{transform:translateY(0)}
+
 </style>
 </head>
 <body>
@@ -988,8 +1005,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <span style="flex:1"></span>
               <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
               <button class="btn btn-success" onclick="saveHomework()">💾 Speichern</button>
-              <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
-              <button class="btn btn-secondary" onclick="emailHWAsPDF()" style="background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc">📧 E-Mail</button>
+              <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken</button>
             </div>
             <div class="form-group"><label>Titel</label>
               <input class="form-control" id="hw-title-input" placeholder="z.B. Hausaufgaben Italiano – Josef">
@@ -1002,11 +1018,16 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <div class="hw-photo-grid" id="hw-photo-grid"></div>
               <input type="file" id="hw-photo-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleHWPhotos(this.files)">
             </div>
-            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap">
+            <!-- Aktionszeile -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center">
               <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
-              <button class="btn btn-success btn-lg" onclick="saveHomework()">💾 Speichern</button>
-              <button class="btn btn-primary btn-lg" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
-              <button class="btn btn-lg" onclick="emailHWAsPDF()" style="background:#e0f2fe;color:#0369a1;border:1.5px solid #7dd3fc;font-weight:700">📧 Per E-Mail senden</button>
+              <button class="btn btn-success" onclick="saveHomework()">💾 Speichern</button>
+              <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
+              <span style="flex:1"></span>
+              <button class="btn-email-pdf" onclick="emailHWAsPDF()">
+                <span style="font-size:20px">📧</span>
+                <span>PDF per E-Mail senden</span>
+              </button>
             </div>
           </div>
         </div>
