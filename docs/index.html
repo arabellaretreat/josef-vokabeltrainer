@@ -441,6 +441,24 @@ tr:hover td{background:var(--blue-50)}
 /* ── Offline Toast ── */
 .toast.offline{background:#374151;color:#f9fafb;border:1px solid #6b7280}
 
+/* ── Satzlücken-Übungen ── */
+.sent-card{max-width:680px;margin:0 auto;background:var(--white);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow);border-top:4px solid #7c3aed}
+.sent-q-num{font-size:14px;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.sent-de-box{background:var(--blue-50);border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:20px;border-left:4px solid var(--blue-400)}
+.sent-de-label{font-size:12px;font-weight:700;color:var(--blue-400);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.sent-de-text{font-size:22px;font-weight:700;color:var(--blue-800);line-height:1.4}
+.sent-de-text strong{color:var(--orange);background:var(--orange-bg);padding:1px 6px;border-radius:4px}
+.sent-it-box{background:#f5f3ff;border-radius:var(--radius-sm);padding:16px 20px;border-left:4px solid #7c3aed;margin-bottom:20px}
+.sent-it-label{font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.sent-it-text{font-size:22px;font-weight:700;color:#3b0764;line-height:1.8}
+.sent-blank-wrap{display:inline-flex;align-items:center;gap:6px;vertical-align:middle}
+.sent-blank{font-size:20px;font-weight:700;border:none;border-bottom:3px solid #7c3aed;background:rgba(124,58,237,.07);padding:4px 12px;border-radius:4px 4px 0 0;min-width:140px;color:#3b0764;font-family:inherit;outline:none;vertical-align:baseline}
+.sent-blank:focus{border-bottom-color:#5b21b6;background:rgba(124,58,237,.14)}
+.sent-blank.correct{border-bottom-color:var(--green);background:var(--green-bg);color:var(--green)}
+.sent-blank.wrong{border-bottom-color:var(--red);background:var(--red-bg);color:var(--red)}
+.sent-reveal{font-size:14px;color:var(--green);font-weight:700;margin-top:8px;display:none;padding-left:4px}
+.sent-actions{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+
 /* ── PDF per E-Mail Button ── */
 .btn-email-pdf{
   display:inline-flex;align-items:center;gap:10px;
@@ -506,6 +524,7 @@ tr:hover td{background:var(--blue-50)}
     <div class="nav-section">Lernen</div>
     <button class="nav-item" onclick="showView('vocabulary')"><span class="nav-icon">📖</span><span>Vokabeln</span><span class="nav-badge" id="vocab-count">0</span></button>
     <button class="nav-item" onclick="showView('learn')"><span class="nav-icon">🃏</span><span>Karteikarten</span></button>
+    <button class="nav-item" onclick="showView('sentences')"><span class="nav-icon">🧩</span><span>Satzlücken</span></button>
     <button class="nav-item" onclick="showView('test')"><span class="nav-icon">✏️</span><span>Test</span></button>
     <div class="nav-section">Auswertung</div>
     <button class="nav-item" onclick="showView('results')"><span class="nav-icon">📊</span><span>Ergebnisse</span></button>
@@ -675,6 +694,71 @@ tr:hover td{background:var(--blue-50)}
           <div style="display:flex;gap:12px;justify-content:center;margin-top:28px">
             <button class="btn btn-secondary btn-lg" onclick="resetLearn()">🔄 Nochmal</button>
             <button class="btn btn-primary btn-lg" onclick="showView('test')">✏️ Test starten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SATZLÜCKEN -->
+    <div id="view-sentences" class="view">
+      <!-- Config -->
+      <div id="sent-config">
+        <div style="max-width:480px;margin:0 auto">
+          <div class="card">
+            <div class="section-title" style="margin-bottom:20px">🧩 Satzlücken-Einstellungen</div>
+            <div class="alert alert-blue" style="margin-bottom:18px">
+              Ein Satz auf Deutsch erscheint — trage das fehlende <strong>italienische Wort</strong> in die Lücke ein.
+            </div>
+            <div class="form-group"><label>Kategorie</label>
+              <select class="form-control" id="sent-cat"><option value="">Alle Kategorien</option></select>
+            </div>
+            <div class="form-group"><label>Anzahl Sätze</label>
+              <input class="form-control" type="number" id="sent-count" value="10" min="3" max="50">
+            </div>
+            <button class="btn btn-primary btn-lg" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#7c3aed,#5b21b6)" onclick="startSentenceSession()">🧩 Übung starten</button>
+          </div>
+        </div>
+      </div>
+      <!-- Übung -->
+      <div id="sent-session" style="display:none">
+        <div class="progress-bar-wrap" style="max-width:680px;margin:0 auto 20px">
+          <div class="progress-track"><div class="progress-fill" style="background:linear-gradient(90deg,#a78bfa,#7c3aed)" id="sent-progress" style="width:0%"></div></div>
+          <div class="progress-label"><span id="sent-pos">1/10</span><span id="sent-stats">✅ 0  ❌ 0</span></div>
+        </div>
+        <div class="sent-card" id="sent-card">
+          <div class="sent-q-num" id="sent-qnum">Satz 1 von 10</div>
+          <!-- Deutsch -->
+          <div class="sent-de-box">
+            <div class="sent-de-label">🇩🇪 Deutsch</div>
+            <div class="sent-de-text" id="sent-de-text"></div>
+          </div>
+          <!-- Italiano mit Lücke -->
+          <div class="sent-it-box">
+            <div class="sent-it-label">🇮🇹 Italiano — trage das fehlende Wort ein:</div>
+            <div class="sent-it-text" id="sent-it-text"></div>
+          </div>
+          <!-- Antwort-Reveal -->
+          <div class="sent-reveal" id="sent-reveal"></div>
+          <!-- Aktionen -->
+          <div class="sent-actions">
+            <button class="btn btn-primary" id="sent-check-btn" onclick="checkSentenceAnswer()">✔ Prüfen</button>
+            <button class="btn btn-secondary" id="sent-next-btn" style="display:none" onclick="nextSentenceExercise()">Weiter →</button>
+            <span style="flex:1"></span>
+            <button class="btn-speak" id="sent-speak-btn" onclick="sentSpeak()" title="Aussprache" style="width:36px;height:36px;font-size:18px">🔊</button>
+          </div>
+        </div>
+      </div>
+      <!-- Fertig -->
+      <div id="sent-done" style="display:none">
+        <div class="result-card">
+          <div class="result-emoji" id="sent-done-emoji">🎉</div>
+          <div style="font-size:26px;font-weight:800;color:var(--blue-800);margin-bottom:8px" id="sent-done-msg">Super!</div>
+          <div style="font-size:17px;color:var(--gray-600)" id="sent-done-stats"></div>
+          <div class="result-bar" style="margin:20px 0"><div class="result-bar-fill" id="sent-done-bar" style="width:0%;background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div></div>
+          <div id="sent-done-wrong" class="wrong-list"></div>
+          <div style="display:flex;gap:12px;justify-content:center;margin-top:28px">
+            <button class="btn btn-secondary btn-lg" onclick="resetSentenceSession()">🔄 Nochmal</button>
+            <button class="btn btn-primary btn-lg" onclick="showView('test')">✏️ Zum Test</button>
           </div>
         </div>
       </div>
@@ -1117,6 +1201,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
 <!-- ═══ BOTTOM NAV (Mobile/Tablet) ═══════════════════════════ -->
 <div class="bn-overlay" id="bn-overlay" onclick="closeMoreMenu()"></div>
 <div class="bottom-nav-more" id="bn-more">
+  <button class="bottom-nav-more-item" onclick="showViewMobile('sentences')"><span class="mn-icon">🧩</span>Satzlücken</button>
   <button class="bottom-nav-more-item" onclick="showViewMobile('translator')"><span class="mn-icon">🌐</span>Übersetzer</button>
   <button class="bottom-nav-more-item" onclick="showViewMobile('import')"><span class="mn-icon">📥</span>Importieren</button>
   <button class="bottom-nav-more-item" onclick="showViewMobile('homework')"><span class="mn-icon">📝</span>Hausaufgaben</button>
@@ -1266,6 +1351,7 @@ function computeCategories() {
   allCategories = Object.keys(counts).sort().map(c => ({ name: c, count: counts[c] }));
   renderCategoryGrids();
   renderCategoryOptions();
+  renderSentCategoryOptions();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1321,6 +1407,7 @@ const viewTitles = {
   dashboard:  ['Dashboard','Willkommen zurück!'],
   vocabulary: ['Vokabeln','Alle gespeicherten Wörter'],
   learn:      ['Karteikarten','Lerne deine Vokabeln'],
+  sentences:  ['Satzlücken','Vokabeln im Satz anwenden'],
   test:       ['Test','Wöchentlicher Test'],
   results:    ['Ergebnisse','Fortschritt und Noten'],
   translator: ['Übersetzer','🇩🇪 ↔ 🇮🇹 in beide Richtungen'],
@@ -3313,6 +3400,194 @@ function checkLogin() {
     init();
   }
   // else: login screen stays visible
+}
+
+// ══════════════════════════════════════════════════════════════
+// SATZLÜCKEN-ÜBUNGEN
+// ══════════════════════════════════════════════════════════════
+
+// 12 abwechslungsreiche Satz-Templates — Vokabel immer fett markiert
+const SATZ_TEMPLATES = [
+  {
+    de: w => `Wie schreibt man <strong>${w.deutsch}</strong> auf Italienisch?`,
+    it: w => `Man schreibt: ___`,
+  },
+  {
+    de: w => `Josef lernt heute das Wort: <strong>${w.deutsch}</strong>.`,
+    it: w => `Auf Italienisch heißt es: ___`,
+  },
+  {
+    de: w => `Die Lehrerin fragt: „Was bedeutet <strong>${w.deutsch}</strong>?"`,
+    it: w => `Josef antwortet: „___"`,
+  },
+  {
+    de: w => `Im Vokabelheft steht: <strong>${w.deutsch}</strong>.`,
+    it: w => `Im quaderno steht: ___`,
+  },
+  {
+    de: w => `Mama erklärt Josef das Wort <strong>${w.deutsch}</strong>.`,
+    it: w => `Auf Italiano sagt man: ___`,
+  },
+  {
+    de: w => `Der Deutschkurs fragt: „<strong>${w.deutsch}</strong> — wie sagt man das auf Italiano?"`,
+    it: w => `Die Antwort lautet: ___`,
+  },
+  {
+    de: w => `Josef muss <strong>${w.deutsch}</strong> für den Test lernen.`,
+    it: w => `Das italiano Wort dafür ist: ___`,
+  },
+  {
+    de: w => `Beim Hausaufgaben-Check kommt: <strong>${w.deutsch}</strong>.`,
+    it: w => `Auf Italiano: ___`,
+  },
+  {
+    de: w => `In der Prüfung erscheint das Wort <strong>${w.deutsch}</strong>.`,
+    it: w => `Die korrekte Übersetzung: ___`,
+  },
+  {
+    de: w => `Der Vokabeltrainer zeigt: <strong>${w.deutsch}</strong>`,
+    it: w => `🇮🇹 ___`,
+  },
+  {
+    de: w => `Schreibe die Übersetzung für <strong>${w.deutsch}</strong>:`,
+    it: w => `→ ___`,
+  },
+  {
+    de: w => `Nächste Vokabel: <strong>${w.deutsch}</strong> — deine Antwort?`,
+    it: w => `Italiano: ___`,
+  },
+];
+
+let sentCards = [], sentIdx = 0, sentCorrect = 0, sentWrong = 0, sentResults = [];
+let _sentCurrentWord = null, _sentCurrentTemplate = null;
+
+function startSentenceSession() {
+  const cat   = document.getElementById('sent-cat').value;
+  const count = parseInt(document.getElementById('sent-count').value) || 10;
+  let pool = vocabulary.filter(w => !cat || w.category === cat);
+  if (pool.length === 0) { toast('Keine Vokabeln in dieser Kategorie.', 'error'); return; }
+  // Schwächste bevorzugen
+  pool.sort((a, b) => {
+    const ra = (a.wrong_count||0) / Math.max((a.correct_count||0)+(a.wrong_count||0), 1);
+    const rb = (b.wrong_count||0) / Math.max((b.correct_count||0)+(b.wrong_count||0), 1);
+    return rb - ra;
+  });
+  sentCards   = shuffle(pool.slice(0, count));
+  sentIdx     = 0;
+  sentCorrect = 0;
+  sentWrong   = 0;
+  sentResults = [];
+  document.getElementById('sent-config').style.display  = 'none';
+  document.getElementById('sent-session').style.display = '';
+  document.getElementById('sent-done').style.display    = 'none';
+  showSentenceExercise();
+}
+
+function showSentenceExercise() {
+  if (sentIdx >= sentCards.length) { finishSentenceSession(); return; }
+  const w   = sentCards[sentIdx];
+  const tpl = SATZ_TEMPLATES[sentIdx % SATZ_TEMPLATES.length];
+  _sentCurrentWord     = w;
+  _sentCurrentTemplate = tpl;
+
+  // Fortschritt
+  document.getElementById('sent-progress').style.width = Math.round(sentIdx / sentCards.length * 100) + '%';
+  document.getElementById('sent-pos').textContent      = `${sentIdx + 1}/${sentCards.length}`;
+  document.getElementById('sent-stats').textContent    = `✅ ${sentCorrect}  ❌ ${sentWrong}`;
+  document.getElementById('sent-qnum').textContent     = `Satz ${sentIdx + 1} von ${sentCards.length}`;
+
+  // Sätze rendern
+  document.getElementById('sent-de-text').innerHTML = tpl.de(w);
+  const itRaw = tpl.it(w);
+  // Lücken-Input einfügen
+  const inputHtml = `<span class="sent-blank-wrap"><input class="sent-blank" id="sent-input" placeholder="…" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkSentenceAnswer()"></span>`;
+  document.getElementById('sent-it-text').innerHTML = itRaw.replace('___', inputHtml);
+
+  // Reset
+  document.getElementById('sent-reveal').style.display    = 'none';
+  document.getElementById('sent-reveal').textContent      = '';
+  document.getElementById('sent-check-btn').style.display = '';
+  document.getElementById('sent-next-btn').style.display  = 'none';
+
+  setTimeout(() => {
+    const inp = document.getElementById('sent-input');
+    if (inp) inp.focus();
+  }, 80);
+}
+
+function checkSentenceAnswer() {
+  const inp = document.getElementById('sent-input');
+  if (!inp) return;
+  const given   = inp.value.trim();
+  const correct = _sentCurrentWord.italienisch;
+  const ok      = normalize(given) === normalize(correct);
+
+  inp.disabled = true;
+  inp.classList.add(ok ? 'correct' : 'wrong');
+
+  const revEl = document.getElementById('sent-reveal');
+  if (ok) {
+    revEl.innerHTML = `✅ Richtig! <button class="btn-speak" onclick="speakWord('${esc(correct)}','it-IT')" style="font-size:15px;width:28px;height:28px;margin-left:6px">🔊</button>`;
+    sentCorrect++;
+  } else {
+    revEl.innerHTML = `❌ Falsch — richtig: <strong style="color:var(--green)">${esc(correct)}</strong> <button class="btn-speak" onclick="speakWord('${esc(correct)}','it-IT')" style="font-size:15px;width:28px;height:28px;margin-left:6px">🔊</button>`;
+    sentWrong++;
+    speakWord(correct, 'it-IT'); // automatisch vorlesen bei Fehler
+  }
+  revEl.style.display = 'block';
+
+  sentResults.push({ word: _sentCurrentWord, given, correct, ok, tpl: _sentCurrentTemplate.de(_sentCurrentWord) });
+
+  document.getElementById('sent-check-btn').style.display = 'none';
+  document.getElementById('sent-next-btn').style.display  = '';
+  document.getElementById('sent-stats').textContent = `✅ ${sentCorrect}  ❌ ${sentWrong}`;
+}
+
+function nextSentenceExercise() {
+  sentIdx++;
+  showSentenceExercise();
+}
+
+function finishSentenceSession() {
+  document.getElementById('sent-session').style.display = 'none';
+  document.getElementById('sent-done').style.display    = '';
+  const total = sentResults.length;
+  const pct   = total ? Math.round(sentCorrect / total * 100) : 0;
+  document.getElementById('sent-done-emoji').textContent = pct >= 90 ? '🎉' : pct >= 60 ? '💪' : '📚';
+  document.getElementById('sent-done-msg').textContent   = pct >= 90 ? 'Ausgezeichnet!' : pct >= 60 ? 'Gut gemacht!' : 'Weiter üben!';
+  document.getElementById('sent-done-stats').textContent = `${sentCorrect} von ${total} richtig (${pct}%)`;
+  setTimeout(() => { document.getElementById('sent-done-bar').style.width = pct + '%'; }, 100);
+
+  const wrong = sentResults.filter(r => !r.ok);
+  document.getElementById('sent-done-wrong').innerHTML = wrong.length === 0
+    ? '<div style="color:var(--green);font-weight:700;margin-top:12px">🎉 Alle Sätze richtig!</div>'
+    : wrong.map(r => `
+        <div class="wrong-item">
+          <div style="font-size:14px;color:var(--gray-600)">${r.tpl}</div>
+          <div style="font-size:13px;padding-left:4px">
+            Deine Antwort: <span style="color:var(--red);font-weight:700">${r.given || '—'}</span>
+            &nbsp;→&nbsp; Richtig: <span style="color:var(--green);font-weight:700">${esc(r.correct)}</span>
+            <button class="btn-speak" onclick="speakWord('${esc(r.correct)}','it-IT')" style="font-size:13px;width:24px;height:24px;margin-left:6px">🔊</button>
+          </div>
+        </div>`).join('');
+}
+
+function resetSentenceSession() {
+  document.getElementById('sent-config').style.display  = '';
+  document.getElementById('sent-session').style.display = 'none';
+  document.getElementById('sent-done').style.display    = 'none';
+}
+
+// Spricht das aktuelle Lücken-Wort vor
+function sentSpeak() {
+  if (_sentCurrentWord) speakWord(_sentCurrentWord.italienisch, 'it-IT');
+}
+
+// Kategorie-Optionen für Satzlücken synchron halten
+function renderSentCategoryOptions() {
+  const opts = allCategories.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  const el = document.getElementById('sent-cat');
+  if (el) el.innerHTML = '<option value="">Alle Kategorien</option>' + opts;
 }
 
 // ══════════════════════════════════════════════════════════════
