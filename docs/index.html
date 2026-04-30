@@ -476,6 +476,13 @@ tr:hover td{background:var(--blue-50)}
 }
 .btn-email-pdf:active{transform:translateY(0)}
 
+/* ── Mobile Test Scroll Fix ── */
+@media(max-width:900px){
+  #test-session{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .test-question-card{margin-bottom:80px}
+  #t-next-btn{position:sticky;bottom:80px;z-index:10;width:100%;margin-top:16px}
+}
+
 </style>
 </head>
 <body>
@@ -911,7 +918,7 @@ tr:hover td{background:var(--blue-50)}
             <button class="btn btn-secondary" style="flex:1;min-width:140px;font-size:15px;padding:13px 10px" onclick="openMicModal('it-IT','translator')">🎤 🇮🇹 Italiano</button>
             <button class="btn btn-secondary" style="flex:1;min-width:140px;font-size:15px;padding:13px 10px" onclick="startOCR()">📷 Text fotografieren</button>
           </div>
-          <input type="file" id="ocr-file-input" accept="image/*" capture="environment" style="display:none" onchange="doOCR(this.files[0])">
+          <input type="file" id="ocr-file-input" accept="image/*" style="display:none" onchange="doOCR(this.files[0])">
 
           <div class="translator-input-area">
             <textarea id="tr-input" placeholder="Wort oder Satz eingeben — oder 🎤 sprechen / 📷 fotografieren…" oninput="onTrInput()" onkeydown="if(event.ctrlKey&&event.key==='Enter')runTranslate()"></textarea>
@@ -943,8 +950,8 @@ tr:hover td{background:var(--blue-50)}
               <button class="btn-speak" id="tr-speak-btn" onclick="trSpeak()" title="Aussprache" style="width:36px;height:36px;font-size:18px;flex-shrink:0;margin-top:4px">🔊</button>
             </div>
             <div class="tr-result-source" id="tr-result-source"></div>
-            <div id="tr-add-vocab" style="margin-top:12px;display:none">
-              <button class="btn btn-success btn-sm" onclick="addTranslationToVocab()">+ Zu Vokabeln hinzufügen</button>
+            <div id="tr-add-vocab" style="margin-top:14px;display:none">
+              <button class="btn btn-success" style="width:100%;font-size:16px;padding:14px;font-weight:700" onclick="addTranslationToVocab()">📚 Zu meinen Vokabeln hinzufügen</button>
             </div>
           </div>
           <div id="tr-error" class="alert alert-orange" style="display:none;margin-top:12px"></div>
@@ -1090,6 +1097,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <button class="btn btn-secondary" onclick="showHWList()">← Liste</button>
               <button class="btn btn-success" onclick="saveHomework()">💾 Speichern</button>
               <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken</button>
+              <button onclick="emailHWAsPDF()" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;white-space:nowrap">📧 PDF per E-Mail</button>
             </div>
             <div class="form-group"><label>Titel</label>
               <input class="form-control" id="hw-title-input" placeholder="z.B. Hausaufgaben Italiano – Josef">
@@ -1108,10 +1116,6 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
               <button class="btn btn-success" onclick="saveHomework()">💾 Speichern</button>
               <button class="btn btn-primary" onclick="printHWAsPDF()">🖨️ Drucken / PDF</button>
               <span style="flex:1"></span>
-              <button class="btn-email-pdf" onclick="emailHWAsPDF()">
-                <span style="font-size:20px">📧</span>
-                <span>PDF per E-Mail senden</span>
-              </button>
             </div>
           </div>
         </div>
@@ -1294,7 +1298,7 @@ async function init() {
     updateUI();
   } catch(e) {
     console.error(e);
-    toast('Verbindungsfehler: ' + e.message, 'error');
+    if (vocabulary.length === 0) toast('Verbindungsfehler: ' + e.message, 'error');
   }
   document.getElementById('loading-overlay').style.display = 'none';
 }
@@ -1472,9 +1476,19 @@ function renderVocabTable() {
     (!cat || w.category === cat)
   );
   document.getElementById('vocab-empty').style.display = vocabulary.length === 0 ? '' : 'none';
+  let noResultsEl = document.getElementById('vocab-no-results');
+  if (!noResultsEl) {
+    noResultsEl = document.createElement('div');
+    noResultsEl.id = 'vocab-no-results';
+    noResultsEl.className = 'empty-state';
+    noResultsEl.innerHTML = '<div class="es-icon">🔍</div><h3>Keine Vokabeln gefunden</h3><p>Suchbegriff anpassen oder Filter zurücksetzen.</p>';
+    document.getElementById('vocab-empty').parentNode.insertBefore(noResultsEl, document.getElementById('vocab-empty').nextSibling);
+  }
+  noResultsEl.style.display = (vocabulary.length > 0 && filtered.length === 0) ? '' : 'none';
+  const sorted = [...filtered].sort((a,b) => new Date(b.added_date||0) - new Date(a.added_date||0));
   const tbody = document.getElementById('vocab-tbody');
   tbody.innerHTML = '';
-  filtered.forEach(w => {
+  sorted.forEach(w => {
     const total  = (w.correct_count || 0) + (w.wrong_count || 0);
     const streak = w.streak || 0;
     const status = streak >= 3 ? '<span class="badge badge-green">✅ Gelernt</span>'
@@ -1598,6 +1612,15 @@ async function runVocabCheck(de, it) {
       return;
     }
 
+    // Prüfe ob API-Ergebnis englisch ist (dann Validierung überspringen)
+    const looksEnglish = /\b(the |of |and |to |is |are |was |a |an )\b/i.test(suggestion);
+    if (looksEnglish) {
+      vcState = 'ok';
+      wrap.style.display = 'none';
+      document.getElementById('vocab-save-btn').disabled = false;
+      return;
+    }
+
     if (isSimilar(it, suggestion)) {
       // ✅ Korrekt
       vcState = 'ok';
@@ -1658,18 +1681,24 @@ function vcEdit() {
 
 // ── Ähnlichkeits-Prüfung ────────────────────────────────────
 function normWord(s) {
-  return s.toLowerCase().trim()
-    .replace(/^(der |die |das |ein |eine |il |la |lo |le |gli |un |una |l'|to )/i, '')
-    .replace(/[.,!?;:()]/g, '').trim();
+  return (s || '').toLowerCase().trim()
+    // Artikel (DE + IT) und Präpositionen entfernen
+    .replace(/^(der |die |das |ein |eine |einen |einem |einer |des |dem |den |il |la |lo |le |gli |l'|un |una |to |the )/i, '')
+    .replace(/[.,!?;:()'"]/g, '')
+    .trim();
 }
 
 function isSimilar(a, b) {
   const na = normWord(a), nb = normWord(b);
+  if (!na || !nb) return true; // leere Eingabe → kein Block
   if (na === nb) return true;
+  // Enthält-Check (beide Richtungen) — z.B. "casa" in "la casa"
   if (na.includes(nb) || nb.includes(na)) return true;
-  // Levenshtein-Distanz bis 25% der Länge tolerieren
-  const maxDist = Math.floor(Math.max(na.length, nb.length) * 0.28);
-  return levenshtein(na, nb) <= Math.max(2, maxDist);
+  // Pluralformen — letzter Buchstabe unterschiedlich
+  if (na.slice(0,-1) === nb.slice(0,-1) && Math.max(na.length,nb.length) > 3) return true;
+  // Levenshtein — bis 35% Toleranz, mindestens 2 Zeichen Spielraum
+  const maxDist = Math.max(2, Math.floor(Math.max(na.length, nb.length) * 0.35));
+  return levenshtein(na, nb) <= maxDist;
 }
 
 function levenshtein(a, b) {
@@ -2314,7 +2343,7 @@ const TR_APIS = [
   // 1. MyMemory (kostenlos, kein Key, 1000 Wörter/Tag)
   async (text, src, tgt) => {
     const r = await fetchWithTimeout(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${src}|${tgt}`, 7000);
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${src === 'de' ? 'de-DE' : 'it-IT'}|${tgt === 'it' ? 'it-IT' : 'de-DE'}`, 7000);
     const d = await r.json();
     if (String(d.responseStatus) !== '200') throw new Error('MyMemory: ' + (d.responseDetails||'Fehler'));
     const t = d.responseData.translatedText;
@@ -2369,6 +2398,12 @@ async function translateViaAPI(text) {
   for (const api of TR_APIS) {
     try {
       const translation = await api(text, src, tgt);
+      // Reject English results when target is Italian or German
+      const hasEnglish = /\b(the |of |and |to be|is |are |was |a |an |it |he |she )\b/i.test(translation);
+      if ((tgt === 'it' || tgt === 'de') && hasEnglish) {
+        console.warn('Ergebnis sieht englisch aus, nächste API probieren:', translation);
+        continue;
+      }
       const dir = src==='de' ? 'de_it' : 'it_de';
       trLastResult = { source:text, translation, direction:dir };
       showTrResult(translation, dir, '🌐 Online-Übersetzung', false);
@@ -2421,7 +2456,9 @@ function swapTranslation() {
 let ocrWorker = null;
 
 function startOCR() {
-  document.getElementById('ocr-file-input').click();
+  const inp = document.getElementById('ocr-file-input');
+  inp.value = ''; // Reset damit onchange auch beim gleichen Foto feuert
+  inp.click();
 }
 
 function closeOCR() {
