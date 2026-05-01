@@ -1429,8 +1429,9 @@ function showView(name) {
   const [title, sub] = viewTitles[name] || [name, ''];
   document.getElementById('topbar-title').textContent    = title;
   document.getElementById('topbar-subtitle').textContent = sub;
-  if (name === 'results') renderResultsView();
-  if (name === 'homework') showHWList();
+  if (name === 'results')    renderResultsView();
+  if (name === 'homework')   showHWList();
+  if (name === 'vocabulary') renderVocabTable();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2586,6 +2587,7 @@ async function addTranslationToVocab() {
     document.getElementById('tr-add-vocab').style.display = 'none';
     toast(`"${pair.deutsch}" zu Vokabeln hinzugefügt!`, 'success');
     computeCategories();
+    renderVocabTable();
   }
 }
 
