@@ -729,7 +729,7 @@ tr:hover td{background:var(--blue-50)}
       <!-- Übung -->
       <div id="sent-session" style="display:none">
         <div class="progress-bar-wrap" style="max-width:680px;margin:0 auto 20px">
-          <div class="progress-track"><div class="progress-fill" style="background:linear-gradient(90deg,#a78bfa,#7c3aed)" id="sent-progress" style="width:0%"></div></div>
+          <div class="progress-track"><div class="progress-fill" id="sent-progress" style="background:linear-gradient(90deg,#a78bfa,#7c3aed);width:0%"></div></div>
           <div class="progress-label"><span id="sent-pos">1/10</span><span id="sent-stats">✅ 0  ❌ 0</span></div>
         </div>
         <div class="sent-card" id="sent-card">
@@ -1375,8 +1375,6 @@ function updateUI() {
 
   const lastTest = allTests.length > 0 ? allTests[allTests.length - 1] : null;
   if (lastTest) {
-    document.getElementById('stat-grade').textContent    = lastTest.grade;
-    document.getElementById('stat-grade-lbl').textContent = lastTest.grade_text;
     document.getElementById('last-test-card').style.display = '';
     document.getElementById('last-test-content').innerHTML = `
       <div style="display:flex;align-items:center;gap:20px">
@@ -1499,7 +1497,7 @@ function renderVocabTable() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${esc(w.deutsch)}</strong></td>
-      <td style="display:flex;align-items:center;gap:6px">${esc(w.italienisch)}<button class="btn-speak" onclick="speakWord('${esc(w.italienisch)}','it-IT')" title="Aussprache">🔊</button></td>
+      <td style="display:flex;align-items:center;gap:6px">${esc(w.italienisch)}<button class="btn-speak" onclick="speakWord('${escJS(w.italienisch)}','it-IT')" title="Aussprache">🔊</button></td>
       <td>${getCatBadgeHtml(w.category)}</td>
       <td style="color:var(--green);font-weight:700">${w.correct_count || 0}</td>
       <td style="color:var(--red);font-weight:700">${w.wrong_count || 0}</td>
@@ -1647,7 +1645,7 @@ async function runVocabCheck(de, it) {
           Bist du sicher, dass <strong>"${esc(it)}"</strong> die richtige Übersetzung ist?
         </div>`;
       document.getElementById('vc-actions').innerHTML = `
-        <button class="btn btn-primary btn-sm" onclick="vcUseSuggestion('${esc(suggestion).replace(/'/g,"\\'")}')">
+        <button class="btn btn-primary btn-sm" onclick="vcUseSuggestion('${escJS(suggestion)}')">
           ✅ Vorschlag &ldquo;${esc(suggestion)}&rdquo; übernehmen
         </button>
         <button class="btn btn-danger btn-sm" onclick="saveWord(true)">
@@ -1982,7 +1980,7 @@ function showQuestion() {
     document.getElementById('t-choices').style.display = 'grid';
     document.getElementById('t-typein').style.display  = 'none';
     document.getElementById('t-choices').innerHTML = q.choices.map(c =>
-      `<button class="choice-btn" onclick="selectChoice(this,'${esc(c)}','${esc(q.correct_answer)}')">${esc(c)}</button>`
+      `<button class="choice-btn" onclick="selectChoice(this,'${escJS(c)}','${escJS(q.correct_answer)}')">${esc(c)}</button>`
     ).join('');
   } else {
     document.getElementById('t-choices').style.display = 'none';
@@ -2275,7 +2273,7 @@ function renderResultsCharts() {
   if (ctx2) {
     if (distChart) distChart.destroy();
     const dist = [0,0,0,0,0];
-    allTests.forEach(t => dist[t.grade-1]++);
+    allTests.forEach(t => { const g = parseInt(t.grade); if (g >= 1 && g <= 5) dist[g-1]++; });
     distChart = new Chart(ctx2, {
       type:'doughnut',
       data:{ labels:['Note 1','Note 2','Note 3','Note 4','Note 5'],
@@ -3384,7 +3382,9 @@ function toast(msg, type='info') {
   setTimeout(() => el.remove(), 3500);
 }
 
-function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;'); }
+function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Für JS-String-Argumente in inline-onclick-Attributen (nicht HTML-Entities!)
+function escJS(s) { return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,''); }
 function fmtDate(iso) {
   if (!iso) return '–';
   return new Date(iso).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -3591,10 +3591,10 @@ function checkSentenceAnswer() {
 
   const revEl = document.getElementById('sent-reveal');
   if (ok) {
-    revEl.innerHTML = `✅ Richtig! <button class="btn-speak" onclick="speakWord('${esc(correct)}','it-IT')" style="font-size:15px;width:28px;height:28px;margin-left:6px">🔊</button>`;
+    revEl.innerHTML = `✅ Richtig! <button class="btn-speak" onclick="speakWord('${escJS(correct)}','it-IT')" style="font-size:15px;width:28px;height:28px;margin-left:6px">🔊</button>`;
     sentCorrect++;
   } else {
-    revEl.innerHTML = `❌ Falsch — richtig: <strong style="color:var(--green)">${esc(correct)}</strong> <button class="btn-speak" onclick="speakWord('${esc(correct)}','it-IT')" style="font-size:15px;width:28px;height:28px;margin-left:6px">🔊</button>`;
+    revEl.innerHTML = `❌ Falsch — richtig: <strong style="color:var(--green)">${esc(correct)}</strong> <button class="btn-speak" onclick="speakWord('${escJS(correct)}','it-IT')" style="font-size:15px;width:28px;height:28px;margin-left:6px">🔊</button>`;
     sentWrong++;
     speakWord(correct, 'it-IT'); // automatisch vorlesen bei Fehler
   }
@@ -3631,7 +3631,7 @@ function finishSentenceSession() {
           <div style="font-size:13px;padding-left:4px">
             Deine Antwort: <span style="color:var(--red);font-weight:700">${r.given || '—'}</span>
             &nbsp;→&nbsp; Richtig: <span style="color:var(--green);font-weight:700">${esc(r.correct)}</span>
-            <button class="btn-speak" onclick="speakWord('${esc(r.correct)}','it-IT')" style="font-size:13px;width:24px;height:24px;margin-left:6px">🔊</button>
+            <button class="btn-speak" onclick="speakWord('${escJS(r.correct)}','it-IT')" style="font-size:13px;width:24px;height:24px;margin-left:6px">🔊</button>
           </div>
         </div>`).join('');
 }
@@ -3783,7 +3783,7 @@ function renderWeakWordsCard() {
       <div style="min-width:56px;text-align:right;font-size:13px;color:var(--red);font-weight:700">
         ${Math.round(w.errorRate*100)}% ❌
       </div>
-      <button class="btn-speak" onclick="speakWord('${esc(w.italienisch)}','it-IT')" title="Aussprache">🔊</button>
+      <button class="btn-speak" onclick="speakWord('${escJS(w.italienisch)}','it-IT')" title="Aussprache">🔊</button>
     </div>`).join('');
   // Stat-Karte im Dashboard aktualisieren
   const sw = document.getElementById('stat-weak');
