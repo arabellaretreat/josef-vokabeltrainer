@@ -2534,12 +2534,17 @@ async function doOCR(file) {
     const wordCount = words.length;
     const lineCount = lines.filter(l => l.trim()).length;
     if (wordCount <= 4 || lineCount <= 1) {
-      document.getElementById('tr-input').value = rawText;
+      const cleaned = rawText.replace(/\s+/g, ' ').trim();
+      document.getElementById('tr-input').value = cleaned;
+      // Sprache des OCR-Textes erkennen → korrekte Richtung setzen
+      const lang = wordCount === 1 ? detectWordLang(cleaned) : detectLang(cleaned);
+      setTrDir(lang === 'de' ? 'de_it' : 'it_de');
       setTimeout(runTranslate, 200);
     } else {
       // Langer Text: nur ersten sinnvollen Satz vorschlagen
       const firstLine = lines.find(l => l.trim().length > 2) || words.slice(0,4).join(' ');
-      document.getElementById('tr-input').value = firstLine.trim();
+      const cleaned = firstLine.trim().replace(/\s+/g, ' ');
+      document.getElementById('tr-input').value = cleaned;
       // Kein auto-translate — Nutzer wählt selbst per Klick oder bearbeitet
       toast('📷 Text erkannt — Wort antippen zum Übersetzen!', 'info');
     }
@@ -2551,10 +2556,30 @@ async function doOCR(file) {
   }
 }
 
+// Sprache eines einzelnen OCR-Wortes zuverlässig erkennen
+function detectWordLang(word) {
+  if (!word) return 'de';
+  const w = word.toLowerCase().trim();
+  // Deutsche Sonderzeichen → sicher Deutsch
+  if (/[äöüß]/i.test(w)) return 'de';
+  // Italienische Akzente → sicher Italienisch
+  if (/[àèéìòùáíóú]/i.test(w)) return 'it';
+  // Gegen Vokabelliste prüfen (mit + ohne Artikel)
+  const stripArticle = s => s.toLowerCase().replace(/^(der |die |das |ein |eine |einen |il |la |lo |le |gli |l'|un |una )/i,'').trim();
+  for (const v of vocabulary) {
+    if (stripArticle(v.deutsch) === w || v.deutsch.toLowerCase().trim() === w) return 'de';
+    if (stripArticle(v.italienisch) === w || v.italienisch.toLowerCase().trim() === w) return 'it';
+  }
+  // Fallback: normales detectLang
+  return detectLang(w);
+}
+
 function ocrWordClick(word) {
   if (!word) return;
   document.getElementById('tr-input').value = word;
-  setTrDir('auto');
+  // Richtung anhand Wort-Sprache setzen (nicht 'auto' → detectLang versagt bei Einzelwörtern)
+  const lang = detectWordLang(word);
+  setTrDir(lang === 'de' ? 'de_it' : 'it_de');
   runTranslate();
   // Scroll zu Ergebnis
   document.getElementById('tr-result').scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -3359,7 +3384,7 @@ function toast(msg, type='info') {
   setTimeout(() => el.remove(), 3500);
 }
 
-function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;'); }
 function fmtDate(iso) {
   if (!iso) return '–';
   return new Date(iso).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'});
