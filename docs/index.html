@@ -2476,7 +2476,7 @@ async function doOCR(file) {
   document.getElementById('ocr-extracted').style.display = 'none';
   document.getElementById('ocr-extracted').innerHTML = '';
 
-  // Bildvorschau
+  // Bildvorschau (Original)
   const previewUrl = URL.createObjectURL(file);
   const previewEl  = document.getElementById('ocr-preview-img');
   previewEl.src    = previewUrl;
@@ -2489,9 +2489,13 @@ async function doOCR(file) {
       await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
     }
 
+    // Bild vorverarbeiten: Graustufen + Kontrast → deutlich bessere OCR-Qualität
+    setOcrStatus('🎨 Bild wird optimiert…', 22);
+    const processedBlob = await preprocessImageForOCR(file);
+
     setOcrStatus('🔍 Text wird erkannt…', 30);
 
-    const { data } = await Tesseract.recognize(file, 'deu+ita', {
+    const { data } = await Tesseract.recognize(processedBlob, 'deu+ita', {
       workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
       langPath:   'https://tessdata.projectnaptha.com/4.0.0',
       corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
@@ -2501,13 +2505,19 @@ async function doOCR(file) {
       }
     });
 
+    const confidence = Math.round(data.confidence || 0);
     const rawText = (data.text || '').trim().replace(/\n{3,}/g, '\n\n');
     if (!rawText) {
       setOcrStatus('❌ Kein Text erkannt — schärferes Foto versuchen.', 0);
       return;
     }
 
-    setOcrStatus(`✅ ${Math.round(data.confidence||0)}% Genauigkeit — Wort antippen zum Übersetzen`, 100);
+    // Confidence-Warnung: bei < 45% ist der Text meist unbrauchbar
+    if (confidence < 45) {
+      setOcrStatus(`⚠️ Geringe Qualität (${confidence}%) — Foto gerade halten, näher ran, bessere Beleuchtung`, 100);
+    } else {
+      setOcrStatus(`✅ ${confidence}% Genauigkeit — Wort antippen zum Übersetzen`, 100);
+    }
 
     // Wörter einzeln anklickbar machen
     const words = rawText.split(/\s+/).filter(Boolean);
@@ -2519,7 +2529,7 @@ async function doOCR(file) {
       const chips = line.trim().split(/\s+/).map(w => {
         const clean = w.replace(/[^\wäöüÄÖÜàèéìòùÀÈÉÌÒÙß]/g, '');
         if (!clean) return esc(w);
-        return `<span class="ocr-word-chip" onclick="ocrWordClick('${esc(clean)}')" title="Klick → übersetzen">${esc(w)}</span>`;
+        return `<span class="ocr-word-chip" onclick="ocrWordClick('${escJS(clean)}')" title="Klick → übersetzen">${esc(w)}</span>`;
       }).join(' ');
       return `<div class="ocr-line">${chips}</div>`;
     }).join('');
@@ -2528,23 +2538,21 @@ async function doOCR(file) {
     extracted.innerHTML = lineHtml;
     extracted.style.display = '';
 
-    // Kurzer Text (<= 4 Wörter oder 1 Zeile): automatisch in Übersetzer
+    // Nur bei kurzem, zuverlässigem Text automatisch in Übersetzer laden
     const wordCount = words.length;
     const lineCount = lines.filter(l => l.trim()).length;
-    if (wordCount <= 4 || lineCount <= 1) {
+    const autoTranslate = (wordCount <= 4 || lineCount <= 1) && confidence >= 45;
+
+    if (autoTranslate) {
       const cleaned = rawText.replace(/\s+/g, ' ').trim();
       document.getElementById('tr-input').value = cleaned;
-      // Sprache des OCR-Textes erkennen → korrekte Richtung setzen
       const lang = wordCount === 1 ? detectWordLang(cleaned) : detectLang(cleaned);
       setTrDir(lang === 'de' ? 'de_it' : 'it_de');
       setTimeout(runTranslate, 200);
     } else {
-      // Langer Text: nur ersten sinnvollen Satz vorschlagen
-      const firstLine = lines.find(l => l.trim().length > 2) || words.slice(0,4).join(' ');
-      const cleaned = firstLine.trim().replace(/\s+/g, ' ');
-      document.getElementById('tr-input').value = cleaned;
-      // Kein auto-translate — Nutzer wählt selbst per Klick oder bearbeitet
-      toast('📷 Text erkannt — Wort antippen zum Übersetzen!', 'info');
+      // Langer oder unsicherer Text: Translator-Feld leeren → Nutzer klickt Chips
+      document.getElementById('tr-input').value = '';
+      clearTrResult();
     }
 
   } catch(e) {
@@ -2552,6 +2560,42 @@ async function doOCR(file) {
     setOcrStatus('❌ Fehler: ' + (e.message || 'OCR fehlgeschlagen'), 0);
     toast('OCR-Fehler: ' + (e.message||'Unbekannt'), 'error');
   }
+}
+
+// Bild-Vorverarbeitung für bessere OCR-Qualität:
+// Graustufen + Kontrast-Boost + Skalierung auf max. 2400px
+function preprocessImageForOCR(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 2400;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > MAX || h > MAX) {
+        const s = MAX / Math.max(w, h);
+        w = Math.round(w * s); h = Math.round(h * s);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        // Graustufen (Luminanz-gewichtet)
+        const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        // Kontrast × 1.6 um Hintergrundmuster / Moiré zu unterdrücken
+        const c = Math.max(0, Math.min(255, (gray - 128) * 1.6 + 128));
+        d[i] = d[i+1] = d[i+2] = c;
+        d[i+3] = 255;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      canvas.toBlob(blob => resolve(blob || file), 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
 }
 
 // Sprache eines einzelnen OCR-Wortes zuverlässig erkennen
