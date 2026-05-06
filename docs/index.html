@@ -1020,7 +1020,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
             <button class="btn btn-primary btn-lg" style="width:100%" onclick="startHWOCR()">
               📷 Aufgaben fotografieren / hochladen
             </button>
-            <input type="file" id="hw-ocr-input" accept="image/*" capture="environment" style="display:none" onchange="doHWOCR(this.files[0])">
+            <input type="file" id="hw-ocr-input" accept="image/*" style="display:none" onchange="doHWOCR(this.files[0])">
           </div>
 
           <div class="card" style="margin-bottom:20px">
@@ -1108,7 +1108,7 @@ ALTER TABLE homework ADD COLUMN IF NOT EXISTS photos text DEFAULT '[]';</code>
             <div class="form-group">
               <label>📷 Fotos / Abfotos</label>
               <div class="hw-photo-grid" id="hw-photo-grid"></div>
-              <input type="file" id="hw-photo-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleHWPhotos(this.files)">
+              <input type="file" id="hw-photo-input" accept="image/*" multiple style="display:none" onchange="handleHWPhotos(this.files)">
             </div>
             <!-- Aktionszeile -->
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center">
@@ -2495,10 +2495,8 @@ async function doOCR(file) {
 
     setOcrStatus('🔍 Text wird erkannt…', 30);
 
-    const { data } = await Tesseract.recognize(processedBlob, 'deu+ita', {
-      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-      langPath:   'https://tessdata.projectnaptha.com/4.0.0',
-      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
+    const { data } = await Tesseract.recognize(processedBlob, 'ita+deu', {
+      langPath: 'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/',
       logger: m => {
         if (m.status === 'recognizing text')
           setOcrStatus(`🔍 ${Math.round(m.progress * 100)}% erkannt…`, 30 + m.progress * 65);
@@ -3046,7 +3044,9 @@ function compressImage(file, maxPx, quality) {
 
 // ── Hausaufgaben: Aufgaben-Foto + Lückenfüller ───────────────
 function startHWOCR() {
-  document.getElementById('hw-ocr-input').click();
+  const inp = document.getElementById('hw-ocr-input');
+  inp.value = ''; // iOS-Fix: gleiche Datei nochmal wählbar
+  inp.click();
 }
 
 async function doHWOCR(file) {
@@ -3077,12 +3077,13 @@ async function doHWOCR(file) {
       setHWFillStatus('⬇️ OCR-Engine laden (einmalig ~10 MB)…', 15);
       await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
     }
+    setHWFillStatus('🎨 Bild wird optimiert…', 20);
+    const processedHW = await preprocessImageForOCR(file);
+
     setHWFillStatus('🔍 Aufgaben werden erkannt…', 30);
 
-    const { data } = await Tesseract.recognize(file, 'deu+ita', {
-      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-      langPath:   'https://tessdata.projectnaptha.com/4.0.0',
-      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
+    const { data } = await Tesseract.recognize(processedHW, 'ita+deu', {
+      langPath: 'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/',
       logger: m => {
         if (m.status === 'recognizing text')
           setHWFillStatus(`🔍 ${Math.round(m.progress*100)}% erkannt…`, 30 + m.progress*60);
